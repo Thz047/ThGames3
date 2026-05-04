@@ -85,140 +85,6 @@
         @keyframes appear {
             0% { transform: scale(0) rotate(-15deg); opacity: 0; }
             100% { transform: scale(1) rotate(0); opacity: 1; }
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jogo de Palavras (estilo Termo)</title>
-  <style>
-    :root {
-      --bg: #121213;
-      --panel: #121213;
-      --text: #ffffff;
-      --tile: #3a3a3c;
-      --tile-border: #3a3a3c;
-      --key: #818384;
-      --hit: #3aa394;
-      --present: #d3ad69;
-      --miss: #3a3a3c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-    header {
-      width: 100%;
-      max-width: 520px;
-      border-bottom: 1px solid #3a3a3c;
-      padding: 14px 12px;
-      display: flex;
-      justify-content: center;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      font-size: 2rem;
-      text-transform: uppercase;
-    }
-    #status {
-      height: 28px;
-      margin-top: 8px;
-      font-size: 0.95rem;
-      opacity: .92;
-    }
-    .board {
-      display: grid;
-      grid-template-rows: repeat(6, 1fr);
-      gap: 6px;
-      width: min(350px, 92vw);
-      margin: 4px auto 14px;
-    }
-    .row {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-    }
-    .tile {
-      width: 100%;
-      aspect-ratio: 1/1;
-      border: 2px solid #3a3a3c;
-      display: grid;
-      place-items: center;
-      font-size: clamp(1.3rem, 4vw, 2rem);
-      font-weight: 700;
-      text-transform: uppercase;
-      user-select: none;
-    }
-    .tile.filled { border-color: #565758; }
-    .tile.hit { background: var(--hit); border-color: var(--hit); }
-    .tile.present { background: var(--present); border-color: var(--present); }
-    .tile.miss { background: var(--miss); border-color: var(--miss); }
-
-    .keyboard {
-      width: min(500px, 96vw);
-      display: grid;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .key-row { display: flex; gap: 6px; justify-content: center; }
-    button.key {
-      border: none;
-      color: #fff;
-      background: var(--key);
-      border-radius: 4px;
-      height: 58px;
-      min-width: 30px;
-      padding: 0 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      cursor: pointer;
-      flex: 1;
-    }
-    button.key.wide { flex: 1.5; font-size: 0.72rem; }
-    button.key.hit { background: var(--hit); }
-    button.key.present { background: var(--present); }
-    button.key.miss { background: var(--miss); }
-  </style>
-</head>
-<body>
-  <header>TERMO</header>
-  <div id="status"></div>
-  <main id="board" class="board" aria-label="tabuleiro"></main>
-  <section id="keyboard" class="keyboard" aria-label="teclado virtual"></section>
-
-  <script>
-    const WORDS = ["CASAL","PRATO","NUVEM","LIVRO","MUNDO","TEXTO","SONHO","FELIZ","BRISA","FESTA"];
-    const solution = WORDS[Math.floor(Math.random() * WORDS.length)];
-
-    const state = {
-      guesses: Array.from({ length: 6 }, () => Array(5).fill("")),
-      evaluations: Array.from({ length: 6 }, () => Array(5).fill("")),
-      row: 0,
-      col: 0,
-      done: false,
-      keyState: {}
-    };
-
-    const boardEl = document.getElementById("board");
-    const kbEl = document.getElementById("keyboard");
-    const statusEl = document.getElementById("status");
-
-    const kbRows = ["QWERTYUIOP", "ASDFGHJKL", "ENTERZXCVBNM⌫"];
-
-    function buildBoard() {
-      boardEl.innerHTML = "";
-      for (let r = 0; r < 6; r++) {
-        const row = document.createElement("div");
-        row.className = "row";
-        for (let c = 0; c < 5; c++) {
-          const tile = document.createElement("div");
-          tile.className = "tile";
-          tile.id = `t-${r}-${c}`;
-          row.appendChild(tile);
         }
 
         .winning-cell {
@@ -226,75 +92,11 @@
             border-color: rgba(16, 185, 129, 0.6) !important;
             color: #10b981 !important;
             animation: win-glow 1s infinite alternate;
-        boardEl.appendChild(row);
-      }
-    }
-
-    function buildKeyboard() {
-      kbEl.innerHTML = "";
-      kbRows.forEach((line) => {
-        const row = document.createElement("div");
-        row.className = "key-row";
-
-        const chunks = line === "ENTERZXCVBNM⌫"
-          ? ["ENTER", ..."ZXCVBNM".split(""), "⌫"]
-          : line.split("");
-
-        chunks.forEach((k) => {
-          const btn = document.createElement("button");
-          btn.className = "key" + ((k === "ENTER" || k === "⌫") ? " wide" : "");
-          btn.dataset.key = k;
-          btn.textContent = k === "⌫" ? "APAGAR" : k;
-          btn.addEventListener("click", () => handleInput(k));
-          row.appendChild(btn);
-        });
-        kbEl.appendChild(row);
-      });
-    }
-
-    function setStatus(msg) { statusEl.textContent = msg; }
-
-    function paint() {
-      for (let r = 0; r < 6; r++) {
-        for (let c = 0; c < 5; c++) {
-          const tile = document.getElementById(`t-${r}-${c}`);
-          const letter = state.guesses[r][c];
-          const ev = state.evaluations[r][c];
-          tile.textContent = letter;
-          tile.className = "tile";
-          if (letter) tile.classList.add("filled");
-          if (ev) tile.classList.add(ev);
         }
 
         @keyframes win-glow {
             0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
             100% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.5); transform: scale(1.03); }
-      }
-
-      document.querySelectorAll("button.key").forEach((btn) => {
-        const k = btn.dataset.key;
-        const key = k === "⌫" || k === "ENTER" ? null : k;
-        btn.classList.remove("hit", "present", "miss");
-        if (key && state.keyState[key]) btn.classList.add(state.keyState[key]);
-      });
-    }
-
-    function rankEval(prev, next) {
-      const order = { miss: 1, present: 2, hit: 3 };
-      if (!prev) return next;
-      return order[next] > order[prev] ? next : prev;
-    }
-
-    function evaluate(word) {
-      const res = Array(5).fill("miss");
-      const target = solution.split("");
-      const guess = word.split("");
-
-      for (let i = 0; i < 5; i++) {
-        if (guess[i] === target[i]) {
-          res[i] = "hit";
-          target[i] = null;
-          guess[i] = null;
         }
 
         .fade-warning::after {
@@ -311,56 +113,12 @@
             animation: pulse-warning 1s infinite linear;
             border-radius: 1.25rem;
             pointer-events: none;
-      }
-      for (let i = 0; i < 5; i++) {
-        if (!guess[i]) continue;
-        const idx = target.indexOf(guess[i]);
-        if (idx !== -1) {
-          res[i] = "present";
-          target[idx] = null;
         }
 
         @keyframes pulse-warning {
             0% { opacity: 0.2; }
             50% { opacity: 0.8; }
             100% { opacity: 0.2; }
-      }
-      return res;
-    }
-
-    function submitGuess() {
-      if (state.col < 5) return setStatus("A palavra precisa ter 5 letras.");
-      const guess = state.guesses[state.row].join("");
-      const evals = evaluate(guess);
-      state.evaluations[state.row] = evals;
-
-      for (let i = 0; i < 5; i++) {
-        const ch = guess[i];
-        state.keyState[ch] = rankEval(state.keyState[ch], evals[i]);
-      }
-
-      if (guess === solution) {
-        state.done = true;
-        setStatus("Boa! Você acertou.");
-      } else if (state.row === 5) {
-        state.done = true;
-        setStatus(`Fim de jogo. Palavra: ${solution}`);
-      } else {
-        state.row++;
-        state.col = 0;
-        setStatus("");
-      }
-      paint();
-    }
-
-    function handleInput(key) {
-      if (state.done) return;
-      if (key === "ENTER") return submitGuess();
-      if (key === "⌫") {
-        if (state.col > 0) {
-          state.col--;
-          state.guesses[state.row][state.col] = "";
-          paint();
         }
 
         .trophy-animate {
@@ -372,6 +130,30 @@
             50% { transform: translateY(-8px) rotate(5deg); }
         }
     </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Termo Clone</title>
+  <style>
+    :root{--bg:#1b1b1d;--line:#3a3a3c;--txt:#fff;--empty:#121213;--key:#818384;--ok:#3aa394;--mid:#d3ad69;--no:#3a3a3c}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center}
+    .app{width:min(540px,100%);padding:0 12px 16px}
+    header{height:58px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+    h1{margin:0;font-size:1.95rem;letter-spacing:.08em}
+    .btn{border:1px solid var(--line);background:transparent;color:#fff;border-radius:8px;padding:8px 10px;cursor:pointer}
+    #status{height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;margin:8px 0}
+    #board{display:grid;gap:6px;margin:0 auto;width:min(350px,92vw)}
+    .row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+    .tile{aspect-ratio:1/1;border:2px solid var(--line);display:grid;place-items:center;text-transform:uppercase;font-weight:700;font-size:2rem;background:var(--empty)}
+    .tile.filled{border-color:#565758}.tile.ok{background:var(--ok);border-color:var(--ok)}.tile.mid{background:var(--mid);border-color:var(--mid)}.tile.no{background:var(--no);border-color:var(--no)}
+    .pop{animation:pop .13s linear}.shake{animation:shake .35s linear}.flip{animation:flip .45s ease}
+    @keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+    @keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+    @keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+    #kb{margin:16px auto 0;width:min(510px,96vw);display:grid;gap:8px}
+    .krow{display:flex;gap:6px;justify-content:center}
+    .k{height:58px;min-width:30px;flex:1;border:none;border-radius:4px;background:var(--key);color:#fff;font-weight:700;cursor:pointer}
+    .k.w{flex:1.5;font-size:.72rem}.k.ok{background:var(--ok)}.k.mid{background:var(--mid)}.k.no{background:var(--no)}
+  </style>
 </head>
 <body>
     <div class="bg-glow"></div>
@@ -758,26 +540,74 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-        return;
-      }
-      if (/^[A-Z]$/.test(key) && state.col < 5) {
-        state.guesses[state.row][state.col] = key;
-        state.col++;
-        paint();
-      }
-    }
+  <div class="app">
+    <header>
+      <button class="btn" id="help">?</button>
+      <h1>TERMO</h1>
+      <button class="btn" id="restart">REINICIAR</button>
+    </header>
+    <div id="status"></div>
+    <main id="board"></main>
+    <section id="kb"></section>
+  </div>
 
-    document.addEventListener("keydown", (e) => {
-      const key = e.key.toUpperCase();
-      if (key === "BACKSPACE") return handleInput("⌫");
-      if (key === "ENTER") return handleInput("ENTER");
-      if (/^[A-Z]$/.test(key)) return handleInput(key);
-    });
+<script>
+const WORDS=["TERMO","SAGAZ","AFETO","LIVRO","MUNDO","TEXTO","NOBRE","VIGOR","FELIZ","BRISA","FAROL","PRATO","NIVEL","SORTE","SONHO","FESTA","VALOR","CANTO"];
+const VALID=new Set(WORDS);
+const rows=6, cols=5;
+let answer="", row=0, col=0, done=false;
+let grid=Array.from({length:rows},()=>Array(cols).fill(""));
+let evals=Array.from({length:rows},()=>Array(cols).fill(""));
+let keyState={};
+const board=document.getElementById('board'), kb=document.getElementById('kb'), status=document.getElementById('status');
+const rank={no:1,mid:2,ok:3};
 
-    buildBoard();
-    buildKeyboard();
-    paint();
-    setStatus("Descubra a palavra em 6 tentativas.");
-  </script>
+function msg(t){status.textContent=t}
+function choose(){answer=WORDS[Math.floor(Math.random()*WORDS.length)]}
+function build(){
+  board.innerHTML='';board.style.gridTemplateRows=`repeat(${rows},1fr)`;
+  for(let r=0;r<rows;r++){const rw=document.createElement('div');rw.className='row';
+    for(let c=0;c<cols;c++){const t=document.createElement('div');t.className='tile';t.id=`t-${r}-${c}`;rw.appendChild(t)}board.appendChild(rw)}
+  kb.innerHTML='';
+  ["QWERTYUIOP","ASDFGHJKL","ENTERZXCVBNM⌫"].forEach(line=>{const rw=document.createElement('div');rw.className='krow';
+    const keys=line==='ENTERZXCVBNM⌫'?["ENTER",..."ZXCVBNM","⌫"]:[...line];
+    keys.forEach(k=>{const b=document.createElement('button');b.className='k'+((k==='ENTER'||k==='⌫')?' w':'');b.dataset.k=k;b.textContent=(k==='⌫'?'APAGAR':k);b.onclick=()=>input(k);rw.appendChild(b)});kb.appendChild(rw);
+  });
+}
+function paint(){
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const t=document.getElementById(`t-${r}-${c}`);t.className='tile';t.textContent=grid[r][c];if(grid[r][c])t.classList.add('filled');if(evals[r][c])t.classList.add(evals[r][c])}
+  document.querySelectorAll('.k').forEach(b=>{const k=b.dataset.k;if(k==='ENTER'||k==='⌫')return;b.classList.remove('ok','mid','no');if(keyState[k])b.classList.add(keyState[k])})
+}
+function score(word){
+  const res=Array(cols).fill('no'); const a=[...answer], g=[...word];
+  for(let i=0;i<cols;i++)if(g[i]===a[i]){res[i]='ok';a[i]=null;g[i]=null}
+  for(let i=0;i<cols;i++)if(g[i]){const j=a.indexOf(g[i]);if(j>-1){res[i]='mid';a[j]=null}}
+  return res;
+}
+function animateRow(r,cls){for(let c=0;c<cols;c++)document.getElementById(`t-${r}-${c}`).classList.add(cls)}
+function input(k){
+  if(done)return;
+  if(k==='ENTER')return submit();
+  if(k==='⌫'){if(col>0){col--;grid[row][col]='';paint()}return}
+  if(/^[A-Z]$/.test(k)&&col<cols){grid[row][col]=k;paint();const t=document.getElementById(`t-${row}-${col}`);t.classList.add('pop');col++}
+}
+function submit(){
+  if(col<cols){msg('Palavra incompleta');animateRow(row,'shake');return}
+  const guess=grid[row].join('');
+  if(!VALID.has(guess)){msg('Palavra não reconhecida');animateRow(row,'shake');return}
+  const s=score(guess);evals[row]=s;
+  for(let i=0;i<cols;i++){const ch=guess[i];keyState[ch]=!keyState[ch]?s[i]:(rank[s[i]]>rank[keyState[ch]]?s[i]:keyState[ch]);const t=document.getElementById(`t-${row}-${i}`);t.classList.add('flip')}
+  paint();
+  if(guess===answer){done=true;msg('GENIAL! Você acertou.');return}
+  if(row===rows-1){done=true;msg(`Fim de jogo. Palavra: ${answer}`);return}
+  row++;col=0;msg('');
+}
+function reset(){row=0;col=0;done=false;grid=Array.from({length:rows},()=>Array(cols).fill(""));evals=Array.from({length:rows},()=>Array(cols).fill(""));keyState={};choose();paint();msg('Descubra a palavra em 6 tentativas.')}
+
+document.addEventListener('keydown',e=>{const k=e.key.toUpperCase();if(k==='BACKSPACE')input('⌫');else if(k==='ENTER')input('ENTER');else if(/^[A-Z]$/.test(k))input(k)});
+document.getElementById('restart').onclick=reset;
+document.getElementById('help').onclick=()=>alert('Acerte a palavra de 5 letras em 6 tentativas.\nVerde: letra certa no lugar certo.\nAmarelo: letra existe em outro lugar.\nCinza: letra não existe.');
+build();reset();
+</script>
 </body>
 </html>

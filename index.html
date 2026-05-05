@@ -6,13 +6,13 @@
     <title>Vidas Secas: O Menino Mais Novo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chosen Palette: Warm Neutrals (Sertão inspired). Background: #faf7f2 (Off-white/Sand), Text: #3f3631 (Dark Brown/Wood), Accents: #c27a3a (Clay/Burnt Orange) -->
-    <!-- Application Structure Plan: A single-page interactive study dashboard divided into logical thematic sections (Resumo, Personagens, Análise, Elementos). This non-linear structure allows students to explore specific aspects of the literary analysis at their own pace. Interactive tabs, click-to-reveal cards, and a data visualization chart are used to manage information density, preventing cognitive overload and making the study material engaging. -->
+    <!-- Chosen Palette: Dark Sertão. Background: #1c1512 (Very dark brown), Cards: #2d241e (Dark brown), Text: #f2e8d5 (Sand), Accents: #e66b27 (Burnt Orange) -->
+    <!-- Application Structure Plan: A single-page interactive study dashboard. Updated to a darker, more dramatic theme matching the book's tone. Increased interactivity with dynamic plot details, animated scroll reveals, and a functional quiz section to test user knowledge. -->
     <!-- Visualization & Content Choices: 
-         1. Plot -> Interactive Step Cards -> Goal: Understand sequence of events -> Method: CSS hover/click states. 
-         2. Characters -> Selectable Grid & Detail Pane -> Goal: Deep dive into character traits without clutter -> Method: Vanilla JS DOM updates. 
-         3. Analysis Themes -> Radar Chart -> Goal: Quantify and compare abstract literary themes (Poverty, Isolation) -> Method: Chart.js on Canvas.
-         4. Narrative Elements -> Grid layout -> Goal: Quick reference -> Method: HTML/Tailwind styling. -->
+         1. Plot -> Clickable Cards updating a central detail view -> Goal: Active reading -> Method: Vanilla JS DOM updates. 
+         2. Characters -> Selectable Grid & Detail Pane -> Goal: Deep dive -> Method: Vanilla JS DOM updates. 
+         3. Analysis Themes -> Radar Chart -> Goal: Quantify themes -> Method: Chart.js on Canvas (Dark mode config).
+         4. Quiz -> Functional Buttons -> Goal: Engagement & Assessment -> Method: JS validation and styling updates. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     
     <script>
@@ -21,12 +21,15 @@
                 extend: {
                     colors: {
                         sertao: {
-                            bg: '#faf7f2',
-                            card: '#ffffff',
-                            text: '#3f3631',
-                            accent: '#c27a3a',
-                            accentLight: '#e6c8ab',
-                            border: '#e0d8c8'
+                            bg: '#1c1512',
+                            card: '#2d241e',
+                            text: '#f2e8d5',
+                            textMuted: '#bdae93',
+                            accent: '#e66b27',
+                            accentHover: '#cc5a1e',
+                            border: '#4a3b32',
+                            success: '#4b7c4b',
+                            error: '#8b3a3a'
                         }
                     },
                     fontFamily: {
@@ -39,8 +42,8 @@
     </script>
     <style>
         body {
-            background-color: #faf7f2;
-            color: #3f3631;
+            background-color: #1c1512;
+            color: #f2e8d5;
         }
         
         .chart-container {
@@ -69,15 +72,31 @@
         
         .tab-active {
             border-bottom-width: 4px;
-            border-color: #c27a3a;
-            color: #c27a3a;
+            border-color: #e66b27;
+            color: #e66b27;
             font-weight: bold;
+        }
+
+        /* Scroll Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Interactive Buttons custom focus */
+        button:focus {
+            outline: none;
         }
     </style>
 </head>
-<body class="font-sans antialiased text-sertao-text selection:bg-sertao-accentLight selection:text-sertao-text">
+<body class="font-sans antialiased selection:bg-sertao-accent selection:text-white">
 
-    <nav class="sticky top-0 z-50 bg-sertao-bg/90 backdrop-blur-md border-b border-sertao-border shadow-sm">
+    <nav class="sticky top-0 z-50 bg-sertao-bg/95 backdrop-blur-md border-b border-sertao-border shadow-md">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center overflow-x-auto hide-scroll">
                 <div class="flex-shrink-0 flex items-center gap-2">
@@ -85,210 +104,206 @@
                     <span class="font-serif font-bold text-xl tracking-tight text-sertao-accent">Vidas Secas</span>
                 </div>
                 <div class="flex space-x-6 whitespace-nowrap px-4">
-                    <a href="#resumo" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Resumo</a>
+                    <a href="#resumo" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Enredo</a>
                     <a href="#personagens" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Personagens</a>
-                    <a href="#analise" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Análise Literária</a>
-                    <a href="#elementos" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Elementos</a>
+                    <a href="#analise" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Análise</a>
+                    <a href="#quiz" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold text-sertao-accent">Quiz Interativo</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <header class="py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-        <h1 class="text-5xl md:text-6xl font-serif font-bold mb-6 text-sertao-text leading-tight">
+    <header class="py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center reveal">
+        <h1 class="text-5xl md:text-7xl font-serif font-bold mb-6 leading-tight">
             O Menino <span class="text-sertao-accent">Mais Novo</span>
         </h1>
-        <p class="text-xl md:text-2xl font-light mb-8 text-sertao-text/80">
-            Uma análise interativa do capítulo da obra prima de Graciliano Ramos.
+        <p class="text-xl md:text-2xl font-light mb-8 text-sertao-textMuted">
+            Explore a solidão, a admiração e os sonhos no árido sertão de Graciliano Ramos.
         </p>
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-sertao-accentLight/30 rounded-full text-sm font-medium border border-sertao-accent/20">
-            <span>📖</span>
-            <span>Apresentação de Literatura Brasileira</span>
-        </div>
+        <button onclick="document.getElementById('resumo').scrollIntoView({behavior: 'smooth'})" class="inline-flex items-center gap-2 px-6 py-3 bg-sertao-accent hover:bg-sertao-accentHover transition-colors rounded-full text-white font-bold shadow-lg shadow-sertao-accent/20">
+            <span>Iniciar Exploração</span>
+            <span>↓</span>
+        </button>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 space-y-24">
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 space-y-32">
 
-        <section id="resumo" class="scroll-mt-24">
+        <!-- Interative Plot Section -->
+        <section id="resumo" class="scroll-mt-24 reveal">
             <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
-                    <span class="text-3xl">🏜️</span> O Enredo do Capítulo
+                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3 border-b-2 border-sertao-border pb-4 inline-block">
+                    <span class="text-3xl">🏜️</span> O Enredo Interativo
                 </h2>
-                <p class="text-lg leading-relaxed text-sertao-text/90">
-                    Explore os principais acontecimentos deste capítulo. A narrativa se concentra na tentativa frustrada do filho mais novo de se provar forte e merecedor de atenção, espelhando-se na figura imponente do pai. Clique ou toque nas etapas abaixo para acompanhar a jornada psicológica e física do garoto.
+                <p class="text-lg leading-relaxed text-sertao-textMuted mt-4">
+                    Selecione os momentos abaixo para entender a jornada do garoto. <strong>Clique nos cartões</strong> para revelar os detalhes e a importância de cada cena.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div class="bg-sertao-card p-6 rounded-xl shadow-sm border border-sertao-border hover:shadow-md transition-all hover:-translate-y-1">
-                    <div class="text-4xl mb-4">🤩</div>
-                    <h3 class="font-bold text-lg mb-2 text-sertao-accent">1. A Admiração</h3>
-                    <p class="text-sm">O menino mais novo fica fascinado ao ver seu pai, Fabiano, domando uma égua brava vestido com seus couros.</p>
-                </div>
-                <div class="bg-sertao-card p-6 rounded-xl shadow-sm border border-sertao-border hover:shadow-md transition-all hover:-translate-y-1">
-                    <div class="text-4xl mb-4">💭</div>
-                    <h3 class="font-bold text-lg mb-2 text-sertao-accent">2. O Desejo</h3>
-                    <p class="text-sm">Ele quer realizar uma ação notável para impressionar a mãe, o irmão mais velho e a cachorra Baleia.</p>
-                </div>
-                <div class="bg-sertao-card p-6 rounded-xl shadow-sm border border-sertao-border hover:shadow-md transition-all hover:-translate-y-1">
-                    <div class="text-4xl mb-4">🐐</div>
-                    <h3 class="font-bold text-lg mb-2 text-sertao-accent">3. A Aventura</h3>
-                    <p class="text-sm">Para imitar o pai, o menino tenta montar no bode do chiqueiro, mas leva uma queda espetacular na areia.</p>
-                </div>
-                <div class="bg-sertao-card p-6 rounded-xl shadow-sm border border-sertao-border hover:shadow-md transition-all hover:-translate-y-1">
-                    <div class="text-4xl mb-4">😞</div>
-                    <h3 class="font-bold text-lg mb-2 text-sertao-accent">4. A Frustração</h3>
-                    <p class="text-sm">O irmão ri, Baleia o ignora e ele se sente abandonado, exposto a quedas e humilhado pela falta de solidariedade.</p>
-                </div>
-                <div class="bg-sertao-card p-6 rounded-xl shadow-sm border border-sertao-border hover:shadow-md transition-all hover:-translate-y-1">
-                    <div class="text-4xl mb-4">🤠</div>
-                    <h3 class="font-bold text-lg mb-2 text-sertao-accent">5. O Sonho</h3>
-                    <p class="text-sm">Termina sonhando em crescer, fumar cigarros de palha e ser um vaqueiro "terrível" e importante como o pai.</p>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                <button onclick="showEnredo(1)" class="enredo-btn bg-sertao-card p-4 rounded-xl border border-sertao-accent text-center hover:bg-sertao-border transition-all flex flex-col items-center gap-2" id="btn-enredo-1">
+                    <span class="text-3xl">🤩</span>
+                    <span class="font-bold text-sm">1. A Admiração</span>
+                </button>
+                <button onclick="showEnredo(2)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-2">
+                    <span class="text-3xl">💭</span>
+                    <span class="font-bold text-sm">2. O Desejo</span>
+                </button>
+                <button onclick="showEnredo(3)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-3">
+                    <span class="text-3xl">🐐</span>
+                    <span class="font-bold text-sm">3. A Aventura</span>
+                </button>
+                <button onclick="showEnredo(4)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-4">
+                    <span class="text-3xl">😞</span>
+                    <span class="font-bold text-sm">4. A Queda</span>
+                </button>
+                <button onclick="showEnredo(5)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-5">
+                    <span class="text-3xl">🤠</span>
+                    <span class="font-bold text-sm">5. O Sonho</span>
+                </button>
+            </div>
+
+            <!-- Detail Display Box -->
+            <div class="bg-sertao-card border-l-4 border-sertao-accent p-6 md:p-8 rounded-r-xl shadow-lg min-h-[160px] flex items-center transition-opacity duration-300" id="enredo-display">
+                <div>
+                    <h3 class="text-2xl font-serif font-bold mb-3 text-sertao-accent" id="enredo-title">A Imagem do Herói</h3>
+                    <p class="text-lg text-sertao-text" id="enredo-text">O menino mais novo fica maravilhado ao observar seu pai, Fabiano, vestido em seus pesados couros de vaqueiro, domando habilidosamente uma égua brava. Para a criança, naquele momento, Fabiano não era apenas um homem pobre, mas um gigante imponente e invencível.</p>
                 </div>
             </div>
         </section>
 
-        <section id="personagens" class="scroll-mt-24 bg-sertao-accentLight/10 rounded-3xl p-6 md:p-10 border border-sertao-border/50">
-            <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
-                    <span class="text-3xl">👥</span> Estudo de Personagens
-                </h2>
-                <p class="text-lg leading-relaxed text-sertao-text/90">
-                    O isolamento no sertão afeta profundamente as relações familiares. Neste painel interativo, selecione um personagem à esquerda para revelar seu papel no capítulo e como ele interage com o Menino Mais Novo.
-                </p>
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-8">
-                <div class="w-full md:w-1/3 space-y-3" id="character-list">
-                    <button onclick="selectCharacter('menino')" class="w-full text-left p-4 rounded-xl border-2 border-sertao-accent bg-sertao-card shadow-sm transition-all font-bold text-sertao-accent char-btn" id="btn-menino">
-                        👦 O Menino Mais Novo
-                    </button>
-                    <button onclick="selectCharacter('fabiano')" class="w-full text-left p-4 rounded-xl border-2 border-transparent bg-sertao-card/50 hover:bg-sertao-card transition-all char-btn" id="btn-fabiano">
-                        👨 Fabiano (O Pai)
-                    </button>
-                    <button onclick="selectCharacter('sinha')" class="w-full text-left p-4 rounded-xl border-2 border-transparent bg-sertao-card/50 hover:bg-sertao-card transition-all char-btn" id="btn-sinha">
-                        👩 Sinhá Vitória (A Mãe)
-                    </button>
-                    <button onclick="selectCharacter('plateia')" class="w-full text-left p-4 rounded-xl border-2 border-transparent bg-sertao-card/50 hover:bg-sertao-card transition-all char-btn" id="btn-plateia">
-                        🐕 O Irmão & Baleia
-                    </button>
+        <!-- Characters Section -->
+        <section id="personagens" class="scroll-mt-24 reveal">
+            <div class="bg-sertao-card/50 rounded-3xl p-6 md:p-10 border border-sertao-border">
+                <div class="mb-10 max-w-3xl">
+                    <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
+                        <span class="text-3xl">👥</span> Estudo de Personagens
+                    </h2>
+                    <p class="text-lg leading-relaxed text-sertao-textMuted">
+                        O isolamento afeta profundamente as relações. Escolha um personagem para analisar sua dinâmica psicológica neste capítulo.
+                    </p>
                 </div>
 
-                <div class="w-full md:w-2/3 bg-sertao-card rounded-2xl p-8 border border-sertao-border shadow-md min-h-[250px] flex flex-col justify-center">
-                    <div id="char-content-menino" class="char-content block">
-                        <div class="text-5xl mb-4">👦</div>
-                        <h3 class="text-2xl font-serif font-bold mb-2">O Menino Mais Novo</h3>
-                        <p class="text-lg text-sertao-text/80 mb-4">O protagonista do capítulo. Um garoto sonhador e extremamente solitário.</p>
-                        <ul class="space-y-2 list-none">
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Sente enorme dificuldade em se comunicar com os outros.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Seu maior herói e referência de masculinidade e poder é o pai.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Possui uma imaginação fértil (vê viventes nas nuvens).</li>
-                        </ul>
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="w-full md:w-1/3 space-y-3" id="character-list">
+                        <button onclick="selectCharacter('menino')" class="w-full text-left p-4 rounded-xl border border-sertao-accent bg-sertao-card shadow-sm transition-all font-bold text-sertao-accent char-btn" id="btn-menino">
+                            👦 O Menino Mais Novo
+                        </button>
+                        <button onclick="selectCharacter('fabiano')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-fabiano">
+                            👨 Fabiano (O Pai)
+                        </button>
+                        <button onclick="selectCharacter('sinha')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-sinha">
+                            👩 Sinhá Vitória (A Mãe)
+                        </button>
+                        <button onclick="selectCharacter('plateia')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-plateia">
+                            🐕 O Irmão & Baleia
+                        </button>
                     </div>
 
-                    <div id="char-content-fabiano" class="char-content hidden">
-                        <div class="text-5xl mb-4">👨</div>
-                        <h3 class="text-2xl font-serif font-bold mb-2">Fabiano</h3>
-                        <p class="text-lg text-sertao-text/80 mb-4">O pai de família e vaqueiro. A grande inspiração do capítulo.</p>
-                        <ul class="space-y-2 list-none">
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Visto pelo menino como um "gigante invencível" quando veste suas roupas de couro.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Representa a força bruta necessária para sobreviver no sertão.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Desatento aos sentimentos do filho, focado apenas no trabalho árduo.</li>
-                        </ul>
-                    </div>
+                    <div class="w-full md:w-2/3 bg-sertao-card rounded-2xl p-8 border border-sertao-border shadow-xl min-h-[280px] flex flex-col justify-center">
+                        <div id="char-content-menino" class="char-content block fade-in active">
+                            <div class="text-5xl mb-4">👦</div>
+                            <h3 class="text-2xl font-serif font-bold mb-2">O Menino Mais Novo</h3>
+                            <p class="text-lg text-sertao-textMuted mb-4">O protagonista do capítulo. Um garoto que busca afeto na aridez.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Sente enorme dificuldade em se comunicar; as palavras lhe faltam.</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Usa a imaginação para fugir da realidade dolorosa (vê formas nas nuvens).</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Deseja aprovação e tenta provar seu valor através de atos físicos, como o pai.</span></li>
+                            </ul>
+                        </div>
 
-                    <div id="char-content-sinha" class="char-content hidden">
-                        <div class="text-5xl mb-4">👩</div>
-                        <h3 class="text-2xl font-serif font-bold mb-2">Sinhá Vitória</h3>
-                        <p class="text-lg text-sertao-text/80 mb-4">A matriarca da família, endurecida pelas circunstâncias da seca.</p>
-                        <ul class="space-y-2 list-none">
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Descrita com atitudes rudes e impacientes.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Responde às tentativas de comunicação do filho menor com um cascudo e aborrecimento.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> Reflete a falta de afeto gerada pela miséria extrema.</li>
-                        </ul>
-                    </div>
+                        <div id="char-content-fabiano" class="char-content hidden fade-in">
+                            <div class="text-5xl mb-4">👨</div>
+                            <h3 class="text-2xl font-serif font-bold mb-2">Fabiano</h3>
+                            <p class="text-lg text-sertao-textMuted mb-4">O pai. Símbolo de força bruta e sobrevivência.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Visto pelo filho como um ser todo-poderoso quando está "metido nos couros".</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Age mais por instinto do que por intelecto (comparado a um bicho).</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Totalmente alheio aos sentimentos e frustrações do filho pequeno.</span></li>
+                            </ul>
+                        </div>
 
-                    <div id="char-content-plateia" class="char-content hidden">
-                        <div class="text-5xl mb-4">🐕</div>
-                        <h3 class="text-2xl font-serif font-bold mb-2">O Irmão Mais Velho & Baleia</h3>
-                        <p class="text-lg text-sertao-text/80 mb-4">A "plateia" que o protagonista tentava impressionar.</p>
-                        <ul class="space-y-2 list-none">
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> <strong>Baleia (Cachorra):</strong> Tratada quase como humana, mas reage com indiferença e "desaprova" a aventura do menino.</li>
-                            <li class="flex items-start gap-2"><span class="text-sertao-accent font-bold">›</span> <strong>Irmão:</strong> Ri da desgraça e queda do mais novo, mostrando a ausência de solidariedade.</li>
-                        </ul>
+                        <div id="char-content-sinha" class="char-content hidden fade-in">
+                            <div class="text-5xl mb-4">👩</div>
+                            <h3 class="text-2xl font-serif font-bold mb-2">Sinhá Vitória</h3>
+                            <p class="text-lg text-sertao-textMuted mb-4">A mãe, endurecida pelo clima e pela miséria.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Reage com aborrecimento às tentativas de aproximação do caçula.</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Agressão física (cascudo) substitui o diálogo e a compreensão.</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Reflete como a extrema pobreza consome a paciência e a ternura humana.</span></li>
+                            </ul>
+                        </div>
+
+                        <div id="char-content-plateia" class="char-content hidden fade-in">
+                            <div class="text-5xl mb-4">🐕</div>
+                            <h3 class="text-2xl font-serif font-bold mb-2">O Irmão Mais Velho & Baleia</h3>
+                            <p class="text-lg text-sertao-textMuted mb-4">A cruel ausência de solidariedade fraterna.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span><strong>O Irmão:</strong> Em vez de ajudar quando o menino cai, ri como um doido, humilhando-o.</span></li>
+                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span><strong>Baleia:</strong> A cachorra é a mais "humana", mas neste capítulo age com indiferença reprovadora, frustrando o garoto.</span></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="analise" class="scroll-mt-24">
+        <!-- Analysis Section -->
+        <section id="analise" class="scroll-mt-24 reveal">
             <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
-                    <span class="text-3xl">🔍</span> Análise Literária e Crítica
+                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3 border-b-2 border-sertao-border pb-4 inline-block">
+                    <span class="text-3xl">🔍</span> Análise Literária
                 </h2>
-                <p class="text-lg leading-relaxed text-sertao-text/90">
-                    Nesta seção, dissecamos as características literárias da obra. Graciliano Ramos utiliza o regionalismo não apenas como cenário, mas como ferramenta de denúncia social profunda. Explore as abas abaixo para ler os conceitos e observe o gráfico que quantifica a intensidade dos temas psicológicos e sociais presentes nos pensamentos do garoto.
+                <p class="text-lg leading-relaxed text-sertao-textMuted mt-4">
+                    Navegue pelos conceitos literários aplicados neste trecho e observe o gráfico radial que traduz as emoções do garoto em dados quantitativos.
                 </p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                 
-                <div>
+                <div class="bg-sertao-card p-6 rounded-2xl border border-sertao-border">
                     <div class="flex border-b border-sertao-border mb-6">
-                        <button onclick="switchTab('modernismo')" class="py-2 px-4 tab-btn tab-active" id="tab-modernismo">Modernismo</button>
-                        <button onclick="switchTab('regionalismo')" class="py-2 px-4 tab-btn text-sertao-text/60 font-medium" id="tab-regionalismo">Regionalismo</button>
-                        <button onclick="switchTab('critica')" class="py-2 px-4 tab-btn text-sertao-text/60 font-medium" id="tab-critica">Crítica Social</button>
+                        <button onclick="switchTab('modernismo')" class="py-3 px-4 tab-btn tab-active" id="tab-modernismo">Modernismo</button>
+                        <button onclick="switchTab('regionalismo')" class="py-3 px-4 tab-btn text-sertao-textMuted font-medium hover:text-sertao-text" id="tab-regionalismo">Regionalismo</button>
+                        <button onclick="switchTab('critica')" class="py-3 px-4 tab-btn text-sertao-textMuted font-medium hover:text-sertao-text" id="tab-critica">Crítica Social</button>
                     </div>
 
                     <div id="pane-modernismo" class="tab-pane block space-y-4">
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Linguagem Seca e Direta</h4>
-                            <p class="text-sm mt-1">Frases curtas, substantivos fortes e poucos adjetivos enfeitados. A linguagem combina perfeitamente com a aridez do cenário.</p>
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
+                            <h4 class="font-bold text-lg">Linguagem Árida</h4>
+                            <p class="text-sm mt-1 text-sertao-textMuted">Frases curtas, cortes bruscos. A estética reflete a seca do ambiente externo e a secura emocional da família.</p>
                         </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Foco Psicológico</h4>
-                            <p class="text-sm mt-1">A história acontece muito mais dentro da cabeça do menino (seus pensamentos, desejos e medos) do que em ações externas espetaculares.</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Realidade Brasileira</h4>
-                            <p class="text-sm mt-1">Retrata a vida dura de uma família de retirantes sem qualquer romantização, focando na crueldade da sobrevivência.</p>
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
+                            <h4 class="font-bold text-lg">Foco Psicológico (Monólogo Interior)</h4>
+                            <p class="text-sm mt-1 text-sertao-textMuted">Quase não há diálogos. A narrativa se dá pelo "discurso indireto livre", misturando a voz do narrador com os pensamentos confusos da criança.</p>
                         </div>
                     </div>
 
                     <div id="pane-regionalismo" class="tab-pane hidden space-y-4">
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">O Ambiente e Flora</h4>
-                            <p class="text-sm mt-1">A constante presença da catinga, dos juazeiros, imburanas e o bebedouro de água barrenta definem o espaço da narrativa.</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
                             <h4 class="font-bold text-lg">A Cultura do Vaqueiro</h4>
-                            <p class="text-sm mt-1">Evidenciada pelo fascínio do menino pelos instrumentos de trabalho: gibão, perneiras, guarda-peito, chapéu de couro e esporas.</p>
+                            <p class="text-sm mt-1 text-sertao-textMuted">Elementos físicos essenciais para a sobrevivência (gibão, perneiras, esporas) ganham status de "armadura mágica" aos olhos do menino.</p>
                         </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Animalização</h4>
-                            <p class="text-sm mt-1">O menino se compara aos animais o tempo todo. Fabiano parece um urubu; as nuvens viram bichos; o garoto tenta imitar o bode.</p>
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
+                            <h4 class="font-bold text-lg">Zoomorfismo</h4>
+                            <p class="text-sm mt-1 text-sertao-textMuted">A linha entre humano e animal desaparece. Fabiano anda pesado "direitinho um urubu"; o garoto grita "imitando as cabras".</p>
                         </div>
                     </div>
 
                     <div id="pane-critica" class="tab-pane hidden space-y-4">
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-red-800">
-                            <h4 class="font-bold text-lg text-red-900">Pobreza Extrema</h4>
-                            <p class="text-sm mt-1">O menino usa uma "camisinha encardida e rasgada". Seu maior sonho de consumo é ter algo básico como "sapatos de couro cru".</p>
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-[#ff4444]">
+                            <h4 class="font-bold text-lg text-[#ff4444]">A Incomunicabilidade</h4>
+                            <p class="text-sm mt-1 text-sertao-textMuted">A maior pobreza não é apenas a falta de comida, mas a falta de palavras. Não conseguir se expressar gera isolamento profundo.</p>
                         </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-red-800">
-                            <h4 class="font-bold text-lg text-red-900">Incomunicabilidade</h4>
-                            <p class="text-sm mt-1">A família não sabe conversar. O menino "ignorava o que pretendia dizer". A violência (o cascudo da mãe) substitui o diálogo e o afeto.</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-red-800">
-                            <h4 class="font-bold text-lg text-red-900">Falta de Perspectiva</h4>
-                            <p class="text-sm mt-1">O ciclo de exploração se perpetua. O maior sonho da criança é crescer apenas para ter a mesma vida sofrida, pesada e explorada do pai.</p>
+                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-[#ff4444]">
+                            <h4 class="font-bold text-lg text-[#ff4444]">Ciclo da Miséria</h4>
+                            <p class="text-sm mt-1 text-sertao-textMuted">O limite dos sonhos do garoto é reproduzir a vida exaustiva do pai. Ele não consegue imaginar um futuro fora da exploração.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sertao-border shadow-sm flex flex-col items-center justify-center">
-                    <h3 class="text-center font-bold font-serif mb-2 text-xl">Intensidade Temática no Capítulo</h3>
-                    <p class="text-center text-xs text-sertao-text/60 mb-6 px-4">Gráfico ilustrativo representando a força dos sentimentos e situações sociais experimentadas pelo garoto nesta cena específica.</p>
+                <div class="bg-sertao-card p-6 rounded-2xl border border-sertao-border shadow-xl flex flex-col items-center justify-center relative">
+                    <h3 class="text-center font-bold font-serif mb-2 text-xl text-sertao-accent">Carga Emocional do Menino</h3>
+                    <p class="text-center text-sm text-sertao-textMuted mb-6 px-4">Gráfico medindo os sentimentos e condições sociais vivenciadas durante o capítulo.</p>
                     
                     <div class="chart-container">
                         <canvas id="themeRadarChart"></canvas>
@@ -298,141 +313,184 @@
             </div>
         </section>
 
-        <section id="elementos" class="scroll-mt-24">
-            <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
-                    <span class="text-3xl">📝</span> Elementos da Narrativa
-                </h2>
-                <p class="text-lg leading-relaxed text-sertao-text/90">
-                    Estrutura técnica que compõe a obra. O uso genial do foco narrativo por Graciliano permite que, mesmo em terceira pessoa, tenhamos acesso íntimo às limitações e devaneios de uma criança que mal sabe falar.
-                </p>
-            </div>
+        <!-- NOVO: Interative Quiz Section -->
+        <section id="quiz" class="scroll-mt-24 reveal">
+            <div class="bg-sertao-bg border border-sertao-accent/40 rounded-3xl p-8 md:p-12 relative overflow-hidden">
+                <!-- Background decoration -->
+                <div class="absolute -right-10 -bottom-10 text-9xl opacity-5 select-none pointer-events-none">🌵</div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-sertao-card p-6 rounded-xl border border-sertao-border/60 hover:border-sertao-accent transition-colors">
-                    <div class="text-xs uppercase tracking-wider font-bold text-sertao-accent mb-2">Foco Narrativo</div>
-                    <h3 class="text-xl font-serif font-bold mb-3">Narrador</h3>
-                    <p class="text-sm"><strong>3ª pessoa (onisciente)</strong>. Porém, ele conta a história pelos "olhos" e pensamentos do menino mais novo, utilizando com maestria o <em>discurso indireto livre</em>.</p>
-                </div>
-                
-                <div class="bg-sertao-card p-6 rounded-xl border border-sertao-border/60 hover:border-sertao-accent transition-colors">
-                    <div class="text-xs uppercase tracking-wider font-bold text-sertao-accent mb-2">Cronologia</div>
-                    <h3 class="text-xl font-serif font-bold mb-3">Tempo</h3>
-                    <p class="text-sm"><strong>Cronológico</strong>. A ação inteira acontece no decorrer de uma tarde, estendendo-se até o início da noite (quando a lua e a estrelinha aparecem no céu).</p>
-                </div>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold mb-2 text-sertao-accent text-center">Teste seus Conhecimentos</h2>
+                <p class="text-center text-sertao-textMuted mb-10">Responda às perguntas abaixo para fixar a análise do capítulo.</p>
 
-                <div class="bg-sertao-card p-6 rounded-xl border border-sertao-border/60 hover:border-sertao-accent transition-colors">
-                    <div class="text-xs uppercase tracking-wider font-bold text-sertao-accent mb-2">Cenário</div>
-                    <h3 class="text-xl font-serif font-bold mb-3">Espaço</h3>
-                    <p class="text-sm"><strong>O Sertão</strong>. Mais especificamente: o pátio da fazenda (copiar), o chiqueiro das cabras e a ribanceira do bebedouro de água barrenta.</p>
-                </div>
+                <div class="max-w-2xl mx-auto space-y-8">
+                    
+                    <!-- Question 1 -->
+                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q1">
+                        <p class="font-bold text-lg mb-4">1. Por que o menino decide tentar montar no bode?</p>
+                        <div class="space-y-3">
+                            <button onclick="checkAnswer('q1', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) Porque estava entediado e queria brincar com o irmão.</button>
+                            <button onclick="checkAnswer('q1', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) Para realizar uma façanha notável e imitar a figura heróica do pai.</button>
+                            <button onclick="checkAnswer('q1', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) Porque foi ordenado por Sinhá Vitória a domar o animal.</button>
+                        </div>
+                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
+                    </div>
 
-                <div class="bg-sertao-card p-6 rounded-xl border border-sertao-border/60 hover:border-sertao-accent transition-colors">
-                    <div class="text-xs uppercase tracking-wider font-bold text-sertao-accent mb-2">Ação Central</div>
-                    <h3 class="text-xl font-serif font-bold mb-3">Enredo Principal</h3>
-                    <p class="text-sm">A tentativa frustrada de um <strong>rito de passagem</strong>. Uma criança querendo provar que já é um homem, imitando o pai para vencer sua própria insignificância.</p>
-                </div>
-            </div>
-        </section>
+                    <!-- Question 2 -->
+                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q2">
+                        <p class="font-bold text-lg mb-4">2. Qual é o maior sonho do menino ao final do capítulo?</p>
+                        <div class="space-y-3">
+                            <button onclick="checkAnswer('q2', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) Ir para a cidade grande e estudar para aprender a falar bem.</button>
+                            <button onclick="checkAnswer('q2', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) Ter um periquito e um cachorro novo para brincar.</button>
+                            <button onclick="checkAnswer('q2', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) Crescer, fumar cigarro de palha e ser um vaqueiro "terrível" como Fabiano.</button>
+                        </div>
+                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
+                    </div>
 
-        <section class="bg-sertao-text text-sertao-bg rounded-3xl p-8 md:p-12 mt-12 text-center max-w-4xl mx-auto shadow-xl">
-            <div class="text-5xl mb-6 opacity-80">🌵</div>
-            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-6 text-sertao-accentLight">Conclusão do Grupo</h2>
-            <p class="text-xl font-light leading-relaxed mb-8 opacity-90">
-                "O capítulo evidencia de forma crua como a infância no sertão é dura e solitária. O menino não tem brinquedos ou acesso à linguagem e afeto; por isso, transforma o trabalho pesado e perigoso do pai em uma brincadeira heroica. É triste notar que sua incapacidade de se comunicar resulta em agressão (o cascudo da mãe), e que seu maior sonho é, paradoxalmente, herdar a vida sofrida do vaqueiro."
-            </p>
-            <div class="inline-block px-6 py-3 border-2 border-sertao-accentLight/30 rounded-lg text-sm uppercase tracking-widest font-bold">
-                Apresentação Literária
+                    <!-- Question 3 -->
+                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q3">
+                        <p class="font-bold text-lg mb-4">3. Qual traço marcante da crítica social de Graciliano Ramos está evidente na relação do menino com a mãe?</p>
+                        <div class="space-y-3">
+                            <button onclick="checkAnswer('q3', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) A incomunicabilidade: a falta de palavras é substituída pela violência física (cascudo).</button>
+                            <button onclick="checkAnswer('q3', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) A superproteção maternal, que impede o menino de amadurecer livremente.</button>
+                            <button onclick="checkAnswer('q3', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) A fome, pois ela não tinha comida para dar ao garoto quando ele pedia.</button>
+                        </div>
+                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
+                    </div>
+
+                </div>
             </div>
         </section>
 
     </main>
 
-    <footer class="bg-sertao-text text-white py-8 text-center text-sm opacity-90">
-        <p>Baseado na obra "Vidas Secas" de Graciliano Ramos.</p>
-        <p class="mt-2 text-sertao-accentLight/50">Desenvolvido para análise estruturada interativa.</p>
+    <footer class="bg-[#110d0a] text-sertao-textMuted py-8 text-center text-sm border-t border-sertao-border mt-12">
+        <p>Desenvolvido como Material de Estudo Interativo.</p>
+        <p class="mt-2 text-sertao-accent/50 font-serif">Graciliano Ramos, Vidas Secas (1938)</p>
     </footer>
 
     <script>
-        // --- Navigation Interactions ---
-        // Highlight active link on scroll (Optional enhancement)
-        
-        // --- Character Selection Logic ---
+        // --- 1. Enredo Interactive Logic ---
+        const enredoData = {
+            1: { title: "A Imagem do Herói", text: "O menino mais novo fica maravilhado ao observar seu pai, Fabiano, vestido em seus pesados couros de vaqueiro, domando habilidosamente uma égua brava. Para a criança, naquele momento, Fabiano não era apenas um homem, mas um gigante imponente e invencível, o centro de seu universo." },
+            2: { title: "A Semente do Desejo", text: "Inspirado pela visão do pai e ignorado pela mãe (que lhe dá um cascudo ao tentar comunicação), nasce o desejo profundo de realizar uma ação notável. Ele quer provar seu valor, deixar a mãe orgulhosa e espantar o irmão e a cachorra Baleia." },
+            3: { title: "O Desafio Animal", text: "Ele não pode domar cavalos, então vai ao chiqueiro. Tenta imitar a figura do vaqueiro pulando no lombo do bode velho, acreditando piamente que forças misteriosas o ajudariam a boiar no ar e triunfar." },
+            4: { title: "A Dura Realidade", text: "A fantasia é quebrada pela física bruta. Ele cai de forma ridícula na areia barrenta. Para piorar a dor física, sofre a humilhação do abandono: o irmão ri enlouquecidamente e Baleia o olha com reprovação." },
+            5: { title: "O Horizonte Limitado", text: "Humilhado e machucado, ele se afasta. Ao invés de sonhar com um mundo diferente, seu maior desejo de consolação é apenas envelhecer rápido para se tornar idêntico ao pai: sofrido, calado, matando animais, fumando, e sendo um vaqueiro 'terrível'." }
+        };
+
+        function showEnredo(id) {
+            // Update Buttons UI
+            document.querySelectorAll('.enredo-btn').forEach(btn => {
+                btn.classList.remove('bg-sertao-card', 'border-sertao-accent');
+                btn.classList.add('bg-sertao-bg', 'border-sertao-border', 'opacity-70');
+            });
+            const activeBtn = document.getElementById(`btn-enredo-${id}`);
+            activeBtn.classList.remove('bg-sertao-bg', 'border-sertao-border', 'opacity-70');
+            activeBtn.classList.add('bg-sertao-card', 'border-sertao-accent');
+
+            // Update Text with fade effect
+            const displayObj = document.getElementById('enredo-display');
+            displayObj.style.opacity = 0;
+            
+            setTimeout(() => {
+                document.getElementById('enredo-title').innerText = enredoData[id].title;
+                document.getElementById('enredo-text').innerText = enredoData[id].text;
+                displayObj.style.opacity = 1;
+            }, 200);
+        }
+
+        // --- 2. Character Selection Logic ---
         function selectCharacter(charId) {
-            // Reset all buttons
-            const buttons = document.querySelectorAll('.char-btn');
-            buttons.forEach(btn => {
+            document.querySelectorAll('.char-btn').forEach(btn => {
                 btn.classList.remove('border-sertao-accent', 'bg-sertao-card', 'text-sertao-accent', 'font-bold');
-                btn.classList.add('border-transparent', 'bg-sertao-card/50', 'text-sertao-text');
+                btn.classList.add('border-sertao-border', 'bg-transparent', 'text-sertao-textMuted');
             });
 
-            // Set active button
             const activeBtn = document.getElementById(`btn-${charId}`);
             activeBtn.classList.add('border-sertao-accent', 'bg-sertao-card', 'text-sertao-accent', 'font-bold');
-            activeBtn.classList.remove('border-transparent', 'bg-sertao-card/50', 'text-sertao-text');
+            activeBtn.classList.remove('border-sertao-border', 'bg-transparent', 'text-sertao-textMuted');
 
-            // Hide all content
-            const contents = document.querySelectorAll('.char-content');
-            contents.forEach(content => {
+            document.querySelectorAll('.char-content').forEach(content => {
                 content.classList.add('hidden');
                 content.classList.remove('block');
             });
 
-            // Show active content
             const activeContent = document.getElementById(`char-content-${charId}`);
             activeContent.classList.remove('hidden');
             activeContent.classList.add('block');
         }
 
-        // --- Tabs Logic for Analysis ---
+        // --- 3. Tabs Logic for Analysis ---
         function switchTab(tabId) {
-            // Reset tabs
-            const tabs = document.querySelectorAll('.tab-btn');
-            tabs.forEach(tab => {
+            document.querySelectorAll('.tab-btn').forEach(tab => {
                 tab.classList.remove('tab-active');
-                tab.classList.add('text-sertao-text/60', 'font-medium');
+                tab.classList.add('text-sertao-textMuted', 'font-medium');
             });
 
-            // Set active tab
             const activeTab = document.getElementById(`tab-${tabId}`);
             activeTab.classList.add('tab-active');
-            activeTab.classList.remove('text-sertao-text/60', 'font-medium');
+            activeTab.classList.remove('text-sertao-textMuted', 'font-medium');
 
-            // Hide all panes
-            const panes = document.querySelectorAll('.tab-pane');
-            panes.forEach(pane => {
+            document.querySelectorAll('.tab-pane').forEach(pane => {
                 pane.classList.add('hidden');
                 pane.classList.remove('block');
             });
 
-            // Show active pane
             const activePane = document.getElementById(`pane-${tabId}`);
             activePane.classList.remove('hidden');
             activePane.classList.add('block');
         }
 
-        // --- Chart.js Implementation ---
-        // Radar chart representing the psychological and social weights in the chapter
+        // --- 4. Interactive Quiz Logic ---
+        function checkAnswer(questionId, isCorrect, btnElement) {
+            const container = document.getElementById(questionId);
+            const buttons = container.querySelectorAll('button');
+            const feedback = container.querySelector('.feedback');
+
+            // Disable all buttons in this question
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:border-sertao-accent');
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            // Style selected button based on correctness
+            btnElement.classList.remove('opacity-50');
+            if (isCorrect) {
+                btnElement.classList.add('bg-sertao-success', 'border-sertao-success', 'text-white');
+                feedback.innerHTML = "✅ Resposta Correta! Excelente observação crítica.";
+                feedback.classList.add('bg-sertao-success/20', 'text-[#7bc07b]');
+            } else {
+                btnElement.classList.add('bg-sertao-error', 'border-sertao-error', 'text-white');
+                feedback.innerHTML = "❌ Incorreto. Tente revisar a seção de Análise Acima.";
+                feedback.classList.add('bg-sertao-error/20', 'text-[#ff7f7f]');
+            }
+            
+            feedback.classList.remove('hidden');
+            feedback.classList.add('block');
+        }
+
+        // --- 5. Chart.js Implementation (Dark Mode Configured) ---
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('themeRadarChart').getContext('2d');
             
             const data = {
                 labels: [
-                    'Admiração (Herói)', 
-                    'Falta de Comunicação', 
-                    'Pobreza Material', 
-                    'Solidão/Isolamento', 
-                    'Sonho/Fantasia'
+                    'Admir. pelo Pai', 
+                    'Falta de Expressão', 
+                    'Privação Material', 
+                    'Solidão Fraterna', 
+                    'Fuga (Fantasia)'
                 ],
                 datasets: [{
-                    label: 'Intensidade Temática (0-10)',
-                    data: [9, 10, 8, 9, 7], // Based on the literary analysis
-                    backgroundColor: 'rgba(194, 122, 58, 0.2)', // sertao-accent with opacity
-                    borderColor: 'rgba(194, 122, 58, 1)',
-                    pointBackgroundColor: 'rgba(63, 54, 49, 1)', // sertao-text
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(194, 122, 58, 1)',
+                    label: 'Intensidade Psicológica',
+                    data: [9, 10, 8, 9, 7],
+                    backgroundColor: 'rgba(230, 107, 39, 0.25)', // accent with opacity
+                    borderColor: 'rgba(230, 107, 39, 1)',
+                    pointBackgroundColor: '#f2e8d5', // text color
+                    pointBorderColor: '#e66b27',
+                    pointHoverBackgroundColor: '#e66b27',
+                    pointHoverBorderColor: '#fff',
                     borderWidth: 2,
                 }]
             };
@@ -442,69 +500,64 @@
                 data: data,
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Crucial for filling the custom container
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false // Hide legend to keep UI clean
-                        },
+                        legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(63, 54, 49, 0.9)',
+                            backgroundColor: 'rgba(28, 21, 18, 0.95)',
+                            titleColor: '#e66b27',
+                            bodyColor: '#f2e8d5',
+                            borderColor: '#4a3b32',
+                            borderWidth: 1,
                             titleFont: { family: 'Georgia, serif', size: 14 },
                             bodyFont: { family: 'Helvetica, Arial, sans-serif', size: 13 },
-                            padding: 10,
+                            padding: 12,
                             callbacks: {
-                                label: function(context) {
-                                    return ` Intensidade: ${context.raw}/10`;
-                                }
+                                label: function(context) { return ` Intensidade: ${context.raw}/10`; }
                             }
                         }
                     },
                     scales: {
                         r: {
-                            angleLines: {
-                                color: 'rgba(63, 54, 49, 0.1)'
-                            },
-                            grid: {
-                                color: 'rgba(63, 54, 49, 0.1)'
-                            },
+                            angleLines: { color: 'rgba(242, 232, 213, 0.1)' },
+                            grid: { color: 'rgba(242, 232, 213, 0.1)' },
                             pointLabels: {
-                                color: '#3f3631',
-                                font: {
-                                    family: 'Helvetica, Arial, sans-serif',
-                                    size: 11,
-                                    weight: 'bold'
-                                },
-                                // Auto-wrap functionality for radar labels using Chart.js built-in array handling
+                                color: '#bdae93', // Muted text
+                                font: { family: 'Helvetica, Arial, sans-serif', size: 12, weight: 'bold' },
                                 callback: function(label) {
-                                    if (label.length > 16) {
+                                    if (label.length > 15) {
                                         const words = label.split(' ');
-                                        let lines = [];
-                                        let currentLine = '';
-                                        words.forEach(word => {
-                                            if ((currentLine + word).length > 16) {
-                                                lines.push(currentLine.trim());
-                                                currentLine = word + ' ';
-                                            } else {
-                                                currentLine += word + ' ';
-                                            }
+                                        let lines = [], currentLine = '';
+                                        words.forEach(w => {
+                                            if ((currentLine + w).length > 15) {
+                                                lines.push(currentLine.trim()); currentLine = w + ' ';
+                                            } else { currentLine += w + ' '; }
                                         });
-                                        lines.push(currentLine.trim());
-                                        return lines;
+                                        lines.push(currentLine.trim()); return lines;
                                     }
                                     return label;
                                 }
                             },
-                            ticks: {
-                                display: false, // Hide numeric ticks on the spider web
-                                min: 0,
-                                max: 10
-                            }
+                            ticks: { display: false, min: 0, max: 10 }
                         }
                     }
                 }
             };
 
             new Chart(ctx, config);
+
+            // --- 6. Scroll Animations (Intersection Observer) ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal').forEach((el) => {
+                observer.observe(el);
+            });
         });
     </script>
 </body>

@@ -1,564 +1,1277 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vidas Secas: O Menino Mais Novo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chosen Palette: Dark Sertão. Background: #1c1512 (Very dark brown), Cards: #2d241e (Dark brown), Text: #f2e8d5 (Sand), Accents: #e66b27 (Burnt Orange) -->
-    <!-- Application Structure Plan: A single-page interactive study dashboard. Updated to a darker, more dramatic theme matching the book's tone. Increased interactivity with dynamic plot details, animated scroll reveals, and a functional quiz section to test user knowledge. -->
-    <!-- Visualization & Content Choices: 
-         1. Plot -> Clickable Cards updating a central detail view -> Goal: Active reading -> Method: Vanilla JS DOM updates. 
-         2. Characters -> Selectable Grid & Detail Pane -> Goal: Deep dive -> Method: Vanilla JS DOM updates. 
-         3. Analysis Themes -> Radar Chart -> Goal: Quantify themes -> Method: Chart.js on Canvas (Dark mode config).
-         4. Quiz -> Functional Buttons -> Goal: Engagement & Assessment -> Method: JS validation and styling updates. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        sertao: {
-                            bg: '#1c1512',
-                            card: '#2d241e',
-                            text: '#f2e8d5',
-                            textMuted: '#bdae93',
-                            accent: '#e66b27',
-                            accentHover: '#cc5a1e',
-                            border: '#4a3b32',
-                            success: '#4b7c4b',
-                            error: '#8b3a3a'
-                        }
-                    },
-                    fontFamily: {
-                        serif: ['Georgia', 'serif'],
-                        sans: ['Helvetica', 'Arial', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            background-color: #1c1512;
-            color: #f2e8d5;
-        }
-        
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 350px;
-            max-height: 400px;
-        }
-        
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 400px;
-            }
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VESTE — Moda Contemporânea</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --card: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #c9a96e;
+    --accent2: #e8d5b0;
+    --text: #f0ece4;
+    --muted: #7a7570;
+    --danger: #e05c5c;
+    --success: #5cb85c;
+  }
 
-        .hide-scroll::-webkit-scrollbar {
-            display: none;
-        }
-        .hide-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        
-        .tab-active {
-            border-bottom-width: 4px;
-            border-color: #e66b27;
-            color: #e66b27;
-            font-weight: bold;
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Scroll Animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-        /* Interactive Buttons custom focus */
-        button:focus {
-            outline: none;
-        }
-    </style>
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; min-height: 100vh; position: relative; z-index: 1; }
+  .page.active { display: flex; flex-direction: column; }
+
+  /* ── LOGIN PAGE ── */
+  #login-page {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 60% 40%, #1a1508 0%, #0d0d0d 70%);
+  }
+
+  .login-wrap {
+    width: 420px;
+    max-width: 95vw;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .brand-logo {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .brand-logo h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .brand-logo p {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 40px;
+  }
+
+  .login-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 28px;
+    color: var(--accent2);
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    border-radius: 1px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .login-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 20px;
+  }
+
+  .login-hint a {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .error-msg {
+    background: rgba(224,92,92,0.12);
+    border: 1px solid rgba(224,92,92,0.3);
+    color: var(--danger);
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 1px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── REGISTER ── */
+  #register-page {
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 40% 60%, #1a1508 0%, #0d0d0d 70%);
+  }
+
+  /* ── MAIN STORE ── */
+  #store-page { background: var(--bg); }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 60px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  nav { display: flex; gap: 32px; align-items: center; }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px 0;
+  }
+
+  nav button:hover, nav button.active-nav { color: var(--accent); }
+
+  .nav-right { display: flex; gap: 16px; align-items: center; }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--accent2);
+  }
+
+  .user-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  .admin-badge {
+    background: linear-gradient(135deg, var(--accent), #a07840);
+    color: #0d0d0d;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* HERO */
+  .hero {
+    padding: 80px 60px 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .hero-text h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1.05;
+    color: var(--text);
+  }
+
+  .hero-text h2 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-text p {
+    color: var(--muted);
+    margin-top: 16px;
+    font-size: 15px;
+    max-width: 400px;
+    line-height: 1.7;
+  }
+
+  .hero-stat {
+    text-align: right;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .hero-stat strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 40px;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    padding: 20px 60px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 18px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(201,169,110,0.06);
+  }
+
+  /* PRODUCTS GRID */
+  .products-section { padding: 40px 60px; }
+
+  .products-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .product-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    z-index: 2;
+  }
+
+  .product-img {
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    background: var(--card);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-img::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(13,13,13,0.6) 0%, transparent 50%);
+  }
+
+  .product-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--accent);
+    color: #0d0d0d;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  .product-info { padding: 20px; }
+
+  .product-cat {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .product-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .product-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .product-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+  }
+
+  .btn-buy {
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 1px;
+  }
+
+  .btn-buy:hover { background: var(--accent2); }
+
+  .no-products {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+  }
+
+  /* ── ADMIN PAGE ── */
+  #admin-page { background: var(--bg); }
+
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 60px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .admin-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .admin-title h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--accent2);
+  }
+
+  .admin-body { padding: 40px 60px; }
+
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    border-radius: 2px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-card .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--accent);
+  }
+
+  .admin-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: background 0.2s;
+  }
+
+  .btn-add:hover { background: var(--accent2); }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .admin-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+
+  .admin-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .admin-table tr:last-child td { border-bottom: none; }
+  .admin-table tr:hover td { background: rgba(201,169,110,0.03); }
+
+  .table-emoji { font-size: 28px; }
+
+  .table-actions { display: flex; gap: 8px; }
+
+  .btn-edit, .btn-delete {
+    border: none;
+    padding: 6px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: opacity 0.2s;
+  }
+
+  .btn-edit { background: var(--card); border: 1px solid var(--border); color: var(--accent); }
+  .btn-edit:hover { border-color: var(--accent); }
+  .btn-delete { background: rgba(224,92,92,0.1); border: 1px solid rgba(224,92,92,0.3); color: var(--danger); }
+  .btn-delete:hover { background: rgba(224,92,92,0.2); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 40px;
+    width: 520px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    margin-bottom: 24px;
+    color: var(--accent2);
+  }
+
+  .modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .modal-grid .field:first-child { grid-column: 1/-1; }
+
+  .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    border-radius: 1px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  .field select:focus { border-color: var(--accent); }
+
+  .field textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    border-radius: 1px;
+    outline: none;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+  }
+
+  .field textarea:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 1px;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    color: var(--accent2);
+    padding: 14px 20px;
+    border-radius: 2px;
+    font-size: 13px;
+    z-index: 500;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    header, .admin-header { padding: 16px 20px; }
+    .hero { padding: 40px 20px 30px; flex-direction: column; }
+    .hero-text h2 { font-size: 40px; }
+    .filter-bar, .products-section, .admin-body { padding: 20px; }
+    .admin-stats { grid-template-columns: 1fr 1fr; }
+    .modal-grid { grid-template-columns: 1fr; }
+    .modal-grid .field:first-child { grid-column: 1; }
+    .admin-table { font-size: 12px; }
+  }
+
+  /* STOCK BADGE */
+  .stock-ok { color: var(--success); font-size: 11px; }
+  .stock-low { color: #e0a85c; font-size: 11px; }
+  .stock-out { color: var(--danger); font-size: 11px; }
+</style>
 </head>
-<body class="font-sans antialiased selection:bg-sertao-accent selection:text-white">
+<body>
 
-    <nav class="sticky top-0 z-50 bg-sertao-bg/95 backdrop-blur-md border-b border-sertao-border shadow-md">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center overflow-x-auto hide-scroll">
-                <div class="flex-shrink-0 flex items-center gap-2">
-                    <span class="text-2xl">🌵</span>
-                    <span class="font-serif font-bold text-xl tracking-tight text-sertao-accent">Vidas Secas</span>
-                </div>
-                <div class="flex space-x-6 whitespace-nowrap px-4">
-                    <a href="#resumo" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Enredo</a>
-                    <a href="#personagens" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Personagens</a>
-                    <a href="#analise" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold">Análise</a>
-                    <a href="#quiz" class="hover:text-sertao-accent transition-colors text-sm uppercase tracking-wider font-semibold text-sertao-accent">Quiz Interativo</a>
-                </div>
-            </div>
-        </div>
+<!-- ══════════════ LOGIN PAGE ══════════════ -->
+<div id="login-page" class="page active">
+  <div class="login-wrap">
+    <div class="brand-logo">
+      <h1>VESTE</h1>
+      <p>Moda Contemporânea</p>
+    </div>
+    <div class="login-card">
+      <h2>Entrar na sua conta</h2>
+      <div class="error-msg" id="login-error"></div>
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" id="login-user" placeholder="seu.nome" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+      <p class="login-hint">Não tem conta? <a onclick="showPage('register-page')">Criar conta</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ REGISTER PAGE ══════════════ -->
+<div id="register-page" class="page">
+  <div class="login-wrap">
+    <div class="brand-logo">
+      <h1>VESTE</h1>
+      <p>Moda Contemporânea</p>
+    </div>
+    <div class="login-card">
+      <h2>Criar conta</h2>
+      <div class="error-msg" id="reg-error"></div>
+      <div class="field">
+        <label>Nome completo</label>
+        <input type="text" id="reg-name" placeholder="Seu Nome" />
+      </div>
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" id="reg-user" placeholder="seu.nome" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="reg-pass" placeholder="••••••••" />
+      </div>
+      <div class="field">
+        <label>Confirmar senha</label>
+        <input type="password" id="reg-pass2" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+      <p class="login-hint">Já tem conta? <a onclick="showPage('login-page')">Entrar</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STORE PAGE ══════════════ -->
+<div id="store-page" class="page">
+  <header>
+    <div class="header-logo">VESTE</div>
+    <nav>
+      <button class="active-nav" onclick="filterProducts('all')">Todos</button>
+      <button onclick="filterProducts('Camiseta')">Camisetas</button>
+      <button onclick="filterProducts('Calça')">Calças</button>
+      <button onclick="filterProducts('Vestido')">Vestidos</button>
+      <button onclick="filterProducts('Jaqueta')">Jaquetas</button>
+      <button onclick="filterProducts('Acessório')">Acessórios</button>
     </nav>
+    <div class="nav-right">
+      <div class="user-badge">
+        <span class="user-dot"></span>
+        <span id="store-username"></span>
+        <span class="admin-badge" id="admin-badge" style="display:none">Admin</span>
+      </div>
+      <button class="btn-logout" id="admin-goto" style="display:none" onclick="showPage('admin-page')">⚙ Painel</button>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
 
-    <header class="py-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center reveal">
-        <h1 class="text-5xl md:text-7xl font-serif font-bold mb-6 leading-tight">
-            O Menino <span class="text-sertao-accent">Mais Novo</span>
-        </h1>
-        <p class="text-xl md:text-2xl font-light mb-8 text-sertao-textMuted">
-            Explore a solidão, a admiração e os sonhos no árido sertão de Graciliano Ramos.
-        </p>
-        <button onclick="document.getElementById('resumo').scrollIntoView({behavior: 'smooth'})" class="inline-flex items-center gap-2 px-6 py-3 bg-sertao-accent hover:bg-sertao-accentHover transition-colors rounded-full text-white font-bold shadow-lg shadow-sertao-accent/20">
-            <span>Iniciar Exploração</span>
-            <span>↓</span>
-        </button>
-    </header>
+  <div class="hero">
+    <div class="hero-text">
+      <h2>Vista-se com<br><em>intenção.</em></h2>
+      <p>Peças selecionadas para quem entende que a moda é uma forma de linguagem. Cada peça conta uma história.</p>
+    </div>
+    <div class="hero-stat">
+      <strong id="product-count">0</strong>
+      peças disponíveis
+    </div>
+  </div>
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 space-y-32">
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" onclick="filterProducts('all', this)">Todos</button>
+    <button class="filter-btn" onclick="filterProducts('Camiseta', this)">Camiseta</button>
+    <button class="filter-btn" onclick="filterProducts('Calça', this)">Calça</button>
+    <button class="filter-btn" onclick="filterProducts('Vestido', this)">Vestido</button>
+    <button class="filter-btn" onclick="filterProducts('Jaqueta', this)">Jaqueta</button>
+    <button class="filter-btn" onclick="filterProducts('Acessório', this)">Acessório</button>
+  </div>
 
-        <!-- Interative Plot Section -->
-        <section id="resumo" class="scroll-mt-24 reveal">
-            <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3 border-b-2 border-sertao-border pb-4 inline-block">
-                    <span class="text-3xl">🏜️</span> O Enredo Interativo
-                </h2>
-                <p class="text-lg leading-relaxed text-sertao-textMuted mt-4">
-                    Selecione os momentos abaixo para entender a jornada do garoto. <strong>Clique nos cartões</strong> para revelar os detalhes e a importância de cada cena.
-                </p>
-            </div>
+  <div class="products-section">
+    <h3>Coleção atual — <span id="filter-label">todas as peças</span></h3>
+    <div class="products-grid" id="products-grid"></div>
+  </div>
+</div>
 
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                <button onclick="showEnredo(1)" class="enredo-btn bg-sertao-card p-4 rounded-xl border border-sertao-accent text-center hover:bg-sertao-border transition-all flex flex-col items-center gap-2" id="btn-enredo-1">
-                    <span class="text-3xl">🤩</span>
-                    <span class="font-bold text-sm">1. A Admiração</span>
-                </button>
-                <button onclick="showEnredo(2)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-2">
-                    <span class="text-3xl">💭</span>
-                    <span class="font-bold text-sm">2. O Desejo</span>
-                </button>
-                <button onclick="showEnredo(3)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-3">
-                    <span class="text-3xl">🐐</span>
-                    <span class="font-bold text-sm">3. A Aventura</span>
-                </button>
-                <button onclick="showEnredo(4)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-4">
-                    <span class="text-3xl">😞</span>
-                    <span class="font-bold text-sm">4. A Queda</span>
-                </button>
-                <button onclick="showEnredo(5)" class="enredo-btn bg-sertao-bg p-4 rounded-xl border border-sertao-border text-center hover:bg-sertao-card transition-all flex flex-col items-center gap-2 opacity-70 hover:opacity-100" id="btn-enredo-5">
-                    <span class="text-3xl">🤠</span>
-                    <span class="font-bold text-sm">5. O Sonho</span>
-                </button>
-            </div>
+<!-- ══════════════ ADMIN PAGE ══════════════ -->
+<div id="admin-page" class="page">
+  <div class="admin-header">
+    <div class="admin-title">
+      <div class="header-logo" style="font-family:'Playfair Display',serif;font-size:22px;letter-spacing:6px;color:var(--accent)">VESTE</div>
+      <h2>Painel Administrativo</h2>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div class="nav-right">
+      <button class="btn-logout" onclick="showPage('store-page')">← Loja</button>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
 
-            <!-- Detail Display Box -->
-            <div class="bg-sertao-card border-l-4 border-sertao-accent p-6 md:p-8 rounded-r-xl shadow-lg min-h-[160px] flex items-center transition-opacity duration-300" id="enredo-display">
-                <div>
-                    <h3 class="text-2xl font-serif font-bold mb-3 text-sertao-accent" id="enredo-title">A Imagem do Herói</h3>
-                    <p class="text-lg text-sertao-text" id="enredo-text">O menino mais novo fica maravilhado ao observar seu pai, Fabiano, vestido em seus pesados couros de vaqueiro, domando habilidosamente uma égua brava. Para a criança, naquele momento, Fabiano não era apenas um homem pobre, mas um gigante imponente e invencível.</p>
-                </div>
-            </div>
-        </section>
+  <div class="admin-body">
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="stat-label">Total de Peças</div>
+        <div class="stat-val" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Categorias</div>
+        <div class="stat-val" id="stat-cats">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Preço Médio</div>
+        <div class="stat-val" id="stat-avg">R$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Peças em Destaque</div>
+        <div class="stat-val" id="stat-feat">0</div>
+      </div>
+    </div>
 
-        <!-- Characters Section -->
-        <section id="personagens" class="scroll-mt-24 reveal">
-            <div class="bg-sertao-card/50 rounded-3xl p-6 md:p-10 border border-sertao-border">
-                <div class="mb-10 max-w-3xl">
-                    <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3">
-                        <span class="text-3xl">👥</span> Estudo de Personagens
-                    </h2>
-                    <p class="text-lg leading-relaxed text-sertao-textMuted">
-                        O isolamento afeta profundamente as relações. Escolha um personagem para analisar sua dinâmica psicológica neste capítulo.
-                    </p>
-                </div>
+    <div class="admin-section-title">
+      Gerenciar Produtos
+      <button class="btn-add" onclick="openModal()">+ Adicionar Peça</button>
+    </div>
 
-                <div class="flex flex-col md:flex-row gap-8">
-                    <div class="w-full md:w-1/3 space-y-3" id="character-list">
-                        <button onclick="selectCharacter('menino')" class="w-full text-left p-4 rounded-xl border border-sertao-accent bg-sertao-card shadow-sm transition-all font-bold text-sertao-accent char-btn" id="btn-menino">
-                            👦 O Menino Mais Novo
-                        </button>
-                        <button onclick="selectCharacter('fabiano')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-fabiano">
-                            👨 Fabiano (O Pai)
-                        </button>
-                        <button onclick="selectCharacter('sinha')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-sinha">
-                            👩 Sinhá Vitória (A Mãe)
-                        </button>
-                        <button onclick="selectCharacter('plateia')" class="w-full text-left p-4 rounded-xl border border-sertao-border bg-transparent hover:bg-sertao-card transition-all char-btn text-sertao-textMuted" id="btn-plateia">
-                            🐕 O Irmão & Baleia
-                        </button>
-                    </div>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Ícone</th>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Preço</th>
+          <th>Estoque</th>
+          <th>Destaque</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="admin-table-body"></tbody>
+    </table>
+  </div>
+</div>
 
-                    <div class="w-full md:w-2/3 bg-sertao-card rounded-2xl p-8 border border-sertao-border shadow-xl min-h-[280px] flex flex-col justify-center">
-                        <div id="char-content-menino" class="char-content block fade-in active">
-                            <div class="text-5xl mb-4">👦</div>
-                            <h3 class="text-2xl font-serif font-bold mb-2">O Menino Mais Novo</h3>
-                            <p class="text-lg text-sertao-textMuted mb-4">O protagonista do capítulo. Um garoto que busca afeto na aridez.</p>
-                            <ul class="space-y-3">
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Sente enorme dificuldade em se comunicar; as palavras lhe faltam.</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Usa a imaginação para fugir da realidade dolorosa (vê formas nas nuvens).</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Deseja aprovação e tenta provar seu valor através de atos físicos, como o pai.</span></li>
-                            </ul>
-                        </div>
+<!-- ══════════════ PRODUCT MODAL ══════════════ -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <h3 id="modal-title">Adicionar Peça</h3>
+    <div class="modal-grid">
+      <div class="field">
+        <label>Nome da peça</label>
+        <input type="text" id="m-name" placeholder="Ex: Blazer Oversized" />
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="m-cat">
+          <option value="Camiseta">Camiseta</option>
+          <option value="Calça">Calça</option>
+          <option value="Vestido">Vestido</option>
+          <option value="Jaqueta">Jaqueta</option>
+          <option value="Acessório">Acessório</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Emoji/Ícone</label>
+        <input type="text" id="m-emoji" placeholder="👗" maxlength="4" />
+      </div>
+      <div class="field">
+        <label>Preço (R$)</label>
+        <input type="number" id="m-price" placeholder="89.90" min="0" step="0.01" />
+      </div>
+      <div class="field">
+        <label>Estoque</label>
+        <input type="number" id="m-stock" placeholder="10" min="0" />
+      </div>
+      <div class="field">
+        <label>Destaque?</label>
+        <select id="m-feat">
+          <option value="false">Não</option>
+          <option value="true">Sim</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Descrição</label>
+        <textarea id="m-desc" placeholder="Descreva a peça..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-add" onclick="saveProduct()">Salvar</button>
+    </div>
+  </div>
+</div>
 
-                        <div id="char-content-fabiano" class="char-content hidden fade-in">
-                            <div class="text-5xl mb-4">👨</div>
-                            <h3 class="text-2xl font-serif font-bold mb-2">Fabiano</h3>
-                            <p class="text-lg text-sertao-textMuted mb-4">O pai. Símbolo de força bruta e sobrevivência.</p>
-                            <ul class="space-y-3">
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Visto pelo filho como um ser todo-poderoso quando está "metido nos couros".</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Age mais por instinto do que por intelecto (comparado a um bicho).</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Totalmente alheio aos sentimentos e frustrações do filho pequeno.</span></li>
-                            </ul>
-                        </div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-                        <div id="char-content-sinha" class="char-content hidden fade-in">
-                            <div class="text-5xl mb-4">👩</div>
-                            <h3 class="text-2xl font-serif font-bold mb-2">Sinhá Vitória</h3>
-                            <p class="text-lg text-sertao-textMuted mb-4">A mãe, endurecida pelo clima e pela miséria.</p>
-                            <ul class="space-y-3">
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Reage com aborrecimento às tentativas de aproximação do caçula.</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Agressão física (cascudo) substitui o diálogo e a compreensão.</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span>Reflete como a extrema pobreza consome a paciência e a ternura humana.</span></li>
-                            </ul>
-                        </div>
+<script>
+// ══════════════════════════════════
+//  STATE
+// ══════════════════════════════════
+let currentUser = null;
+let editingId   = null;
+let activeFilter = 'all';
 
-                        <div id="char-content-plateia" class="char-content hidden fade-in">
-                            <div class="text-5xl mb-4">🐕</div>
-                            <h3 class="text-2xl font-serif font-bold mb-2">O Irmão Mais Velho & Baleia</h3>
-                            <p class="text-lg text-sertao-textMuted mb-4">A cruel ausência de solidariedade fraterna.</p>
-                            <ul class="space-y-3">
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span><strong>O Irmão:</strong> Em vez de ajudar quando o menino cai, ri como um doido, humilhando-o.</span></li>
-                                <li class="flex items-start gap-3"><span class="text-sertao-accent mt-1">➔</span> <span><strong>Baleia:</strong> A cachorra é a mais "humana", mas neste capítulo age com indiferença reprovadora, frustrando o garoto.</span></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+// Storage helpers
+function getUsers()    { try { return JSON.parse(localStorage.getItem('veste_users') || '[]'); } catch(e){ return []; } }
+function setUsers(u)   { localStorage.setItem('veste_users', JSON.stringify(u)); }
+function getProducts() { try { return JSON.parse(localStorage.getItem('veste_products') || 'null') || defaultProducts(); } catch(e){ return defaultProducts(); } }
+function setProducts(p){ localStorage.setItem('veste_products', JSON.stringify(p)); }
 
-        <!-- Analysis Section -->
-        <section id="analise" class="scroll-mt-24 reveal">
-            <div class="mb-10 max-w-3xl">
-                <h2 class="text-3xl font-serif font-bold mb-4 flex items-center gap-3 border-b-2 border-sertao-border pb-4 inline-block">
-                    <span class="text-3xl">🔍</span> Análise Literária
-                </h2>
-                <p class="text-lg leading-relaxed text-sertao-textMuted mt-4">
-                    Navegue pelos conceitos literários aplicados neste trecho e observe o gráfico radial que traduz as emoções do garoto em dados quantitativos.
-                </p>
-            </div>
+function defaultProducts() {
+  return [
+    { id: 1, name: 'Blazer Oversized', cat: 'Jaqueta', emoji: '🧥', price: 349.90, stock: 8, feat: true,  desc: 'Corte moderno com caimento relaxado. Perfeito para looks dia e noite.' },
+    { id: 2, name: 'Calça Alfaiataria', cat: 'Calça',  emoji: '👖', price: 229.90, stock: 15, feat: false, desc: 'Tecido de alta gramatura. Modelagem clássica com toque contemporâneo.' },
+    { id: 3, name: 'Vestido Midi Plissado', cat: 'Vestido', emoji: '👗', price: 289.90, stock: 6, feat: true,  desc: 'Plissado flui com elegância. Versátil para diferentes ocasiões.' },
+    { id: 4, name: 'Camiseta Essential', cat: 'Camiseta', emoji: '👕', price: 89.90, stock: 30, feat: false, desc: 'Algodão premium 100%. O básico que nunca falha no guarda-roupa.' },
+    { id: 5, name: 'Bolsa Estruturada', cat: 'Acessório', emoji: '👜', price: 429.90, stock: 4, feat: true,  desc: 'Couro vegano com ferragens douradas. Capacidade e estilo em equilíbrio.' },
+    { id: 6, name: 'Jaqueta Jeans Vintage', cat: 'Jaqueta', emoji: '🫙', price: 199.90, stock: 12, feat: false, desc: 'Lavagem especial que remete aos anos 90. Peça atemporal.' },
+  ];
+}
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                
-                <div class="bg-sertao-card p-6 rounded-2xl border border-sertao-border">
-                    <div class="flex border-b border-sertao-border mb-6">
-                        <button onclick="switchTab('modernismo')" class="py-3 px-4 tab-btn tab-active" id="tab-modernismo">Modernismo</button>
-                        <button onclick="switchTab('regionalismo')" class="py-3 px-4 tab-btn text-sertao-textMuted font-medium hover:text-sertao-text" id="tab-regionalismo">Regionalismo</button>
-                        <button onclick="switchTab('critica')" class="py-3 px-4 tab-btn text-sertao-textMuted font-medium hover:text-sertao-text" id="tab-critica">Crítica Social</button>
-                    </div>
+// ══════════════════════════════════
+//  PAGES
+// ══════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'store-page') renderProducts();
+  if (id === 'admin-page') renderAdmin();
+}
 
-                    <div id="pane-modernismo" class="tab-pane block space-y-4">
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Linguagem Árida</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">Frases curtas, cortes bruscos. A estética reflete a seca do ambiente externo e a secura emocional da família.</p>
-                        </div>
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Foco Psicológico (Monólogo Interior)</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">Quase não há diálogos. A narrativa se dá pelo "discurso indireto livre", misturando a voz do narrador com os pensamentos confusos da criança.</p>
-                        </div>
-                    </div>
+// ══════════════════════════════════
+//  AUTH
+// ══════════════════════════════════
+function isAdmin(username) {
+  return username.endsWith('.fael');
+}
 
-                    <div id="pane-regionalismo" class="tab-pane hidden space-y-4">
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">A Cultura do Vaqueiro</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">Elementos físicos essenciais para a sobrevivência (gibão, perneiras, esporas) ganham status de "armadura mágica" aos olhos do menino.</p>
-                        </div>
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-sertao-accent">
-                            <h4 class="font-bold text-lg">Zoomorfismo</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">A linha entre humano e animal desaparece. Fabiano anda pesado "direitinho um urubu"; o garoto grita "imitando as cabras".</p>
-                        </div>
-                    </div>
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
 
-                    <div id="pane-critica" class="tab-pane hidden space-y-4">
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-[#ff4444]">
-                            <h4 class="font-bold text-lg text-[#ff4444]">A Incomunicabilidade</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">A maior pobreza não é apenas a falta de comida, mas a falta de palavras. Não conseguir se expressar gera isolamento profundo.</p>
-                        </div>
-                        <div class="p-4 rounded-lg bg-sertao-bg border-l-4 border-[#ff4444]">
-                            <h4 class="font-bold text-lg text-[#ff4444]">Ciclo da Miséria</h4>
-                            <p class="text-sm mt-1 text-sertao-textMuted">O limite dos sonhos do garoto é reproduzir a vida exaustiva do pai. Ele não consegue imaginar um futuro fora da exploração.</p>
-                        </div>
-                    </div>
-                </div>
+  if (!user || !pass) { showErr(errEl, 'Preencha todos os campos.'); return; }
 
-                <div class="bg-sertao-card p-6 rounded-2xl border border-sertao-border shadow-xl flex flex-col items-center justify-center relative">
-                    <h3 class="text-center font-bold font-serif mb-2 text-xl text-sertao-accent">Carga Emocional do Menino</h3>
-                    <p class="text-center text-sm text-sertao-textMuted mb-6 px-4">Gráfico medindo os sentimentos e condições sociais vivenciadas durante o capítulo.</p>
-                    
-                    <div class="chart-container">
-                        <canvas id="themeRadarChart"></canvas>
-                    </div>
-                </div>
+  // Admin pattern – qualquer "algumacoisa.fael"
+  if (isAdmin(user)) {
+    // verifica se já cadastrou ou usa senha padrão "admin"
+    const users = getUsers();
+    const found = users.find(u => u.username === user);
+    if (found && found.password !== pass) { showErr(errEl, 'Senha incorreta.'); return; }
+    if (!found) {
+      if (pass !== 'admin') { showErr(errEl, 'Senha incorreta. (padrão: admin)'); return; }
+      users.push({ username: user, password: pass, name: 'Administrador' });
+      setUsers(users);
+    }
+    currentUser = { username: user, name: found ? found.name : 'Administrador', isAdmin: true };
+    loginSuccess();
+    return;
+  }
 
-            </div>
-        </section>
+  const users = getUsers();
+  const found = users.find(u => u.username === user);
+  if (!found) { showErr(errEl, 'Usuário não encontrado.'); return; }
+  if (found.password !== pass) { showErr(errEl, 'Senha incorreta.'); return; }
 
-        <!-- NOVO: Interative Quiz Section -->
-        <section id="quiz" class="scroll-mt-24 reveal">
-            <div class="bg-sertao-bg border border-sertao-accent/40 rounded-3xl p-8 md:p-12 relative overflow-hidden">
-                <!-- Background decoration -->
-                <div class="absolute -right-10 -bottom-10 text-9xl opacity-5 select-none pointer-events-none">🌵</div>
+  currentUser = { username: user, name: found.name, isAdmin: false };
+  loginSuccess();
+}
 
-                <h2 class="text-3xl md:text-4xl font-serif font-bold mb-2 text-sertao-accent text-center">Teste seus Conhecimentos</h2>
-                <p class="text-center text-sertao-textMuted mb-10">Responda às perguntas abaixo para fixar a análise do capítulo.</p>
+function loginSuccess() {
+  document.getElementById('store-username').textContent = currentUser.username;
+  document.getElementById('admin-badge').style.display = currentUser.isAdmin ? '' : 'none';
+  document.getElementById('admin-goto').style.display  = currentUser.isAdmin ? '' : 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showPage('store-page');
+  showToast('Bem-vindo(a), ' + currentUser.name + '!');
+}
 
-                <div class="max-w-2xl mx-auto space-y-8">
-                    
-                    <!-- Question 1 -->
-                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q1">
-                        <p class="font-bold text-lg mb-4">1. Por que o menino decide tentar montar no bode?</p>
-                        <div class="space-y-3">
-                            <button onclick="checkAnswer('q1', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) Porque estava entediado e queria brincar com o irmão.</button>
-                            <button onclick="checkAnswer('q1', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) Para realizar uma façanha notável e imitar a figura heróica do pai.</button>
-                            <button onclick="checkAnswer('q1', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) Porque foi ordenado por Sinhá Vitória a domar o animal.</button>
-                        </div>
-                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
-                    </div>
+function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const user  = document.getElementById('reg-user').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.style.display = 'none';
 
-                    <!-- Question 2 -->
-                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q2">
-                        <p class="font-bold text-lg mb-4">2. Qual é o maior sonho do menino ao final do capítulo?</p>
-                        <div class="space-y-3">
-                            <button onclick="checkAnswer('q2', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) Ir para a cidade grande e estudar para aprender a falar bem.</button>
-                            <button onclick="checkAnswer('q2', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) Ter um periquito e um cachorro novo para brincar.</button>
-                            <button onclick="checkAnswer('q2', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) Crescer, fumar cigarro de palha e ser um vaqueiro "terrível" como Fabiano.</button>
-                        </div>
-                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
-                    </div>
+  if (!name || !user || !pass || !pass2) { showErr(errEl, 'Preencha todos os campos.'); return; }
+  if (pass !== pass2) { showErr(errEl, 'As senhas não coincidem.'); return; }
+  if (pass.length < 4) { showErr(errEl, 'Senha deve ter ao menos 4 caracteres.'); return; }
+  if (!/^[a-zA-Z0-9._-]+$/.test(user)) { showErr(errEl, 'Usuário inválido. Use letras, números, . _ -'); return; }
 
-                    <!-- Question 3 -->
-                    <div class="quiz-item bg-sertao-card p-6 rounded-xl border border-sertao-border shadow-md" id="q3">
-                        <p class="font-bold text-lg mb-4">3. Qual traço marcante da crítica social de Graciliano Ramos está evidente na relação do menino com a mãe?</p>
-                        <div class="space-y-3">
-                            <button onclick="checkAnswer('q3', true, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">A) A incomunicabilidade: a falta de palavras é substituída pela violência física (cascudo).</button>
-                            <button onclick="checkAnswer('q3', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">B) A superproteção maternal, que impede o menino de amadurecer livremente.</button>
-                            <button onclick="checkAnswer('q3', false, this)" class="w-full text-left p-3 rounded bg-sertao-bg border border-sertao-border hover:border-sertao-accent transition">C) A fome, pois ela não tinha comida para dar ao garoto quando ele pedia.</button>
-                        </div>
-                        <p class="feedback hidden mt-4 p-3 rounded text-sm font-bold"></p>
-                    </div>
+  const users = getUsers();
+  if (users.find(u => u.username === user)) { showErr(errEl, 'Usuário já cadastrado.'); return; }
 
-                </div>
-            </div>
-        </section>
+  users.push({ username: user, password: pass, name });
+  setUsers(users);
 
-    </main>
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-user').value = '';
+  document.getElementById('reg-pass').value = '';
+  document.getElementById('reg-pass2').value = '';
 
-    <footer class="bg-[#110d0a] text-sertao-textMuted py-8 text-center text-sm border-t border-sertao-border mt-12">
-        <p>Desenvolvido como Material de Estudo Interativo.</p>
-        <p class="mt-2 text-sertao-accent/50 font-serif">Graciliano Ramos, Vidas Secas (1938)</p>
-    </footer>
+  showPage('login-page');
+  showToast('Conta criada! Faça login.');
+}
 
-    <script>
-        // --- 1. Enredo Interactive Logic ---
-        const enredoData = {
-            1: { title: "A Imagem do Herói", text: "O menino mais novo fica maravilhado ao observar seu pai, Fabiano, vestido em seus pesados couros de vaqueiro, domando habilidosamente uma égua brava. Para a criança, naquele momento, Fabiano não era apenas um homem, mas um gigante imponente e invencível, o centro de seu universo." },
-            2: { title: "A Semente do Desejo", text: "Inspirado pela visão do pai e ignorado pela mãe (que lhe dá um cascudo ao tentar comunicação), nasce o desejo profundo de realizar uma ação notável. Ele quer provar seu valor, deixar a mãe orgulhosa e espantar o irmão e a cachorra Baleia." },
-            3: { title: "O Desafio Animal", text: "Ele não pode domar cavalos, então vai ao chiqueiro. Tenta imitar a figura do vaqueiro pulando no lombo do bode velho, acreditando piamente que forças misteriosas o ajudariam a boiar no ar e triunfar." },
-            4: { title: "A Dura Realidade", text: "A fantasia é quebrada pela física bruta. Ele cai de forma ridícula na areia barrenta. Para piorar a dor física, sofre a humilhação do abandono: o irmão ri enlouquecidamente e Baleia o olha com reprovação." },
-            5: { title: "O Horizonte Limitado", text: "Humilhado e machucado, ele se afasta. Ao invés de sonhar com um mundo diferente, seu maior desejo de consolação é apenas envelhecer rápido para se tornar idêntico ao pai: sofrido, calado, matando animais, fumando, e sendo um vaqueiro 'terrível'." }
-        };
+function doLogout() {
+  currentUser = null;
+  showPage('login-page');
+}
 
-        function showEnredo(id) {
-            // Update Buttons UI
-            document.querySelectorAll('.enredo-btn').forEach(btn => {
-                btn.classList.remove('bg-sertao-card', 'border-sertao-accent');
-                btn.classList.add('bg-sertao-bg', 'border-sertao-border', 'opacity-70');
-            });
-            const activeBtn = document.getElementById(`btn-enredo-${id}`);
-            activeBtn.classList.remove('bg-sertao-bg', 'border-sertao-border', 'opacity-70');
-            activeBtn.classList.add('bg-sertao-card', 'border-sertao-accent');
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
 
-            // Update Text with fade effect
-            const displayObj = document.getElementById('enredo-display');
-            displayObj.style.opacity = 0;
-            
-            setTimeout(() => {
-                document.getElementById('enredo-title').innerText = enredoData[id].title;
-                document.getElementById('enredo-text').innerText = enredoData[id].text;
-                displayObj.style.opacity = 1;
-            }, 200);
-        }
+// ══════════════════════════════════
+//  STORE
+// ══════════════════════════════════
+function filterProducts(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('filter-label').textContent = cat === 'all' ? 'todas as peças' : cat.toLowerCase() + 's';
+  renderProducts();
+}
 
-        // --- 2. Character Selection Logic ---
-        function selectCharacter(charId) {
-            document.querySelectorAll('.char-btn').forEach(btn => {
-                btn.classList.remove('border-sertao-accent', 'bg-sertao-card', 'text-sertao-accent', 'font-bold');
-                btn.classList.add('border-sertao-border', 'bg-transparent', 'text-sertao-textMuted');
-            });
+function renderProducts() {
+  const products = getProducts();
+  const grid = document.getElementById('products-grid');
+  let filtered = activeFilter === 'all' ? products : products.filter(p => p.cat === activeFilter);
 
-            const activeBtn = document.getElementById(`btn-${charId}`);
-            activeBtn.classList.add('border-sertao-accent', 'bg-sertao-card', 'text-sertao-accent', 'font-bold');
-            activeBtn.classList.remove('border-sertao-border', 'bg-transparent', 'text-sertao-textMuted');
+  document.getElementById('product-count').textContent = products.length;
 
-            document.querySelectorAll('.char-content').forEach(content => {
-                content.classList.add('hidden');
-                content.classList.remove('block');
-            });
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-products">Nenhuma peça nesta categoria ainda.</div>';
+    return;
+  }
 
-            const activeContent = document.getElementById(`char-content-${charId}`);
-            activeContent.classList.remove('hidden');
-            activeContent.classList.add('block');
-        }
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card">
+      <div class="product-img">
+        ${p.feat ? '<div class="product-tag">Destaque</div>' : ''}
+        <span style="position:relative;z-index:1">${p.emoji || '👕'}</span>
+      </div>
+      <div class="product-info">
+        <div class="product-cat">${p.cat}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.desc || ''}</div>
+        <div class="product-footer">
+          <div class="product-price">R$ ${Number(p.price).toFixed(2)}</div>
+          <button class="btn-buy" onclick="buyProduct('${p.name}')">Comprar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
 
-        // --- 3. Tabs Logic for Analysis ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(tab => {
-                tab.classList.remove('tab-active');
-                tab.classList.add('text-sertao-textMuted', 'font-medium');
-            });
+function buyProduct(name) {
+  showToast('✓ ' + name + ' adicionado ao carrinho!');
+}
 
-            const activeTab = document.getElementById(`tab-${tabId}`);
-            activeTab.classList.add('tab-active');
-            activeTab.classList.remove('text-sertao-textMuted', 'font-medium');
+// ══════════════════════════════════
+//  ADMIN
+// ══════════════════════════════════
+function renderAdmin() {
+  const products = getProducts();
+  const tbody = document.getElementById('admin-table-body');
 
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.add('hidden');
-                pane.classList.remove('block');
-            });
+  // Stats
+  document.getElementById('stat-total').textContent = products.length;
+  const cats = [...new Set(products.map(p => p.cat))].length;
+  document.getElementById('stat-cats').textContent = cats;
+  const avg = products.length ? (products.reduce((s,p) => s + Number(p.price), 0) / products.length) : 0;
+  document.getElementById('stat-avg').textContent = 'R$' + avg.toFixed(0);
+  document.getElementById('stat-feat').textContent = products.filter(p => p.feat).length;
 
-            const activePane = document.getElementById(`pane-${tabId}`);
-            activePane.classList.remove('hidden');
-            activePane.classList.add('block');
-        }
+  if (products.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">Nenhum produto cadastrado.</td></tr>';
+    return;
+  }
 
-        // --- 4. Interactive Quiz Logic ---
-        function checkAnswer(questionId, isCorrect, btnElement) {
-            const container = document.getElementById(questionId);
-            const buttons = container.querySelectorAll('button');
-            const feedback = container.querySelector('.feedback');
+  tbody.innerHTML = products.map(p => {
+    const stockClass = p.stock === 0 ? 'stock-out' : p.stock < 5 ? 'stock-low' : 'stock-ok';
+    const stockLabel = p.stock === 0 ? '✗ Sem estoque' : p.stock < 5 ? '⚠ Baixo (' + p.stock + ')' : '✓ OK (' + p.stock + ')';
+    return `
+      <tr>
+        <td><span class="table-emoji">${p.emoji || '👕'}</span></td>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.cat}</td>
+        <td>R$ ${Number(p.price).toFixed(2)}</td>
+        <td><span class="${stockClass}">${stockLabel}</span></td>
+        <td>${p.feat ? '⭐ Sim' : '—'}</td>
+        <td>
+          <div class="table-actions">
+            <button class="btn-edit" onclick="openModal(${p.id})">Editar</button>
+            <button class="btn-delete" onclick="deleteProduct(${p.id})">Excluir</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
-            // Disable all buttons in this question
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.remove('hover:border-sertao-accent');
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-            });
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modal-title').textContent = id ? 'Editar Peça' : 'Adicionar Peça';
 
-            // Style selected button based on correctness
-            btnElement.classList.remove('opacity-50');
-            if (isCorrect) {
-                btnElement.classList.add('bg-sertao-success', 'border-sertao-success', 'text-white');
-                feedback.innerHTML = "✅ Resposta Correta! Excelente observação crítica.";
-                feedback.classList.add('bg-sertao-success/20', 'text-[#7bc07b]');
-            } else {
-                btnElement.classList.add('bg-sertao-error', 'border-sertao-error', 'text-white');
-                feedback.innerHTML = "❌ Incorreto. Tente revisar a seção de Análise Acima.";
-                feedback.classList.add('bg-sertao-error/20', 'text-[#ff7f7f]');
-            }
-            
-            feedback.classList.remove('hidden');
-            feedback.classList.add('block');
-        }
+  if (id) {
+    const p = getProducts().find(x => x.id === id);
+    if (p) {
+      document.getElementById('m-name').value  = p.name;
+      document.getElementById('m-cat').value   = p.cat;
+      document.getElementById('m-emoji').value = p.emoji || '';
+      document.getElementById('m-price').value = p.price;
+      document.getElementById('m-stock').value = p.stock;
+      document.getElementById('m-feat').value  = String(p.feat);
+      document.getElementById('m-desc').value  = p.desc || '';
+    }
+  } else {
+    document.getElementById('m-name').value  = '';
+    document.getElementById('m-cat').value   = 'Camiseta';
+    document.getElementById('m-emoji').value = '';
+    document.getElementById('m-price').value = '';
+    document.getElementById('m-stock').value = '';
+    document.getElementById('m-feat').value  = 'false';
+    document.getElementById('m-desc').value  = '';
+  }
 
-        // --- 5. Chart.js Implementation (Dark Mode Configured) ---
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('themeRadarChart').getContext('2d');
-            
-            const data = {
-                labels: [
-                    'Admir. pelo Pai', 
-                    'Falta de Expressão', 
-                    'Privação Material', 
-                    'Solidão Fraterna', 
-                    'Fuga (Fantasia)'
-                ],
-                datasets: [{
-                    label: 'Intensidade Psicológica',
-                    data: [9, 10, 8, 9, 7],
-                    backgroundColor: 'rgba(230, 107, 39, 0.25)', // accent with opacity
-                    borderColor: 'rgba(230, 107, 39, 1)',
-                    pointBackgroundColor: '#f2e8d5', // text color
-                    pointBorderColor: '#e66b27',
-                    pointHoverBackgroundColor: '#e66b27',
-                    pointHoverBorderColor: '#fff',
-                    borderWidth: 2,
-                }]
-            };
+  document.getElementById('product-modal').classList.add('open');
+}
 
-            const config = {
-                type: 'radar',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(28, 21, 18, 0.95)',
-                            titleColor: '#e66b27',
-                            bodyColor: '#f2e8d5',
-                            borderColor: '#4a3b32',
-                            borderWidth: 1,
-                            titleFont: { family: 'Georgia, serif', size: 14 },
-                            bodyFont: { family: 'Helvetica, Arial, sans-serif', size: 13 },
-                            padding: 12,
-                            callbacks: {
-                                label: function(context) { return ` Intensidade: ${context.raw}/10`; }
-                            }
-                        }
-                    },
-                    scales: {
-                        r: {
-                            angleLines: { color: 'rgba(242, 232, 213, 0.1)' },
-                            grid: { color: 'rgba(242, 232, 213, 0.1)' },
-                            pointLabels: {
-                                color: '#bdae93', // Muted text
-                                font: { family: 'Helvetica, Arial, sans-serif', size: 12, weight: 'bold' },
-                                callback: function(label) {
-                                    if (label.length > 15) {
-                                        const words = label.split(' ');
-                                        let lines = [], currentLine = '';
-                                        words.forEach(w => {
-                                            if ((currentLine + w).length > 15) {
-                                                lines.push(currentLine.trim()); currentLine = w + ' ';
-                                            } else { currentLine += w + ' '; }
-                                        });
-                                        lines.push(currentLine.trim()); return lines;
-                                    }
-                                    return label;
-                                }
-                            },
-                            ticks: { display: false, min: 0, max: 10 }
-                        }
-                    }
-                }
-            };
+function closeModal() {
+  document.getElementById('product-modal').classList.remove('open');
+  editingId = null;
+}
 
-            new Chart(ctx, config);
+function saveProduct() {
+  const name  = document.getElementById('m-name').value.trim();
+  const cat   = document.getElementById('m-cat').value;
+  const emoji = document.getElementById('m-emoji').value.trim() || '👕';
+  const price = parseFloat(document.getElementById('m-price').value);
+  const stock = parseInt(document.getElementById('m-stock').value);
+  const feat  = document.getElementById('m-feat').value === 'true';
+  const desc  = document.getElementById('m-desc').value.trim();
 
-            // --- 6. Scroll Animations (Intersection Observer) ---
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('active');
-                    }
-                });
-            }, { threshold: 0.1 });
+  if (!name)            { showToast('Nome é obrigatório.', true); return; }
+  if (isNaN(price) || price < 0) { showToast('Preço inválido.', true); return; }
+  if (isNaN(stock) || stock < 0) { showToast('Estoque inválido.', true); return; }
 
-            document.querySelectorAll('.reveal').forEach((el) => {
-                observer.observe(el);
-            });
-        });
-    </script>
+  const products = getProducts();
+
+  if (editingId) {
+    const idx = products.findIndex(p => p.id === editingId);
+    if (idx !== -1) products[idx] = { ...products[idx], name, cat, emoji, price, stock, feat, desc };
+    showToast('Peça atualizada!');
+  } else {
+    const newId = products.length ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    products.push({ id: newId, name, cat, emoji, price, stock, feat, desc });
+    showToast('Peça adicionada!');
+  }
+
+  setProducts(products);
+  closeModal();
+  renderAdmin();
+}
+
+function deleteProduct(id) {
+  if (!confirm('Tem certeza que deseja excluir esta peça?')) return;
+  const products = getProducts().filter(p => p.id !== id);
+  setProducts(products);
+  renderAdmin();
+  showToast('Peça excluída.');
+}
+
+// ══════════════════════════════════
+//  TOAST
+// ══════════════════════════════════
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════
+//  ENTER key
+// ══════════════════════════════════
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('reg-pass2').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+
+// Close modal on overlay click
+document.getElementById('product-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
 </body>
 </html>
